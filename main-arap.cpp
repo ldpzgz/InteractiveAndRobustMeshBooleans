@@ -34,7 +34,11 @@
  *      http://pers.ge.imati.cnr.it/livesu/                                              *
  *                                                                                       *
  * ***************************************************************************************/
-
+#define NOMINMAX
+#ifdef _HAS_STD_BYTE
+#undef _HAS_STD_BYTE
+#endif
+#define _HAS_STD_BYTE 0
 #include <cinolib/gl/glcanvas.h>
 #include <cinolib/drawable_triangle_soup.h>
 #include <cinolib/meshes/drawable_trimesh.h>

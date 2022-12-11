@@ -151,7 +151,9 @@ inline bool contains(const absl::InlinedVector<T, N>& values, T value) {
 }
 
 #if 1
-
+/*
+* 这是一个二维数组，行是固定大小的，大小由N来确定，填满一行就新增一行，后面的数据就添加到新行里面。
+*/
 template<typename T, size_t N>
 struct bucket_arena {
   std::vector<std::vector<T>> buckets;
@@ -178,11 +180,14 @@ struct bucket_arena {
   }
 };
 
+/*
+* 能装下各种类型的顶点的容器
+*/
 struct point_arena {
-  std::vector<explicitPoint3D> init;
-  bucket_arena<implicitPoint3D_LPI, 1024 * 1024> edges;
+  std::vector<explicitPoint3D> init;//保存去除了重复顶点的顶点，其他顶点指针指向这里
+  bucket_arena<implicitPoint3D_LPI, 1024 * 1024> edges;//由直线与平面相交确定的隐式点
   bucket_arena<explicitPoint3D, 1024> jolly;
-  bucket_arena<implicitPoint3D_TPI, 1024 * 1024> tpi;
+  bucket_arena<implicitPoint3D_TPI, 1024 * 1024> tpi;//由三个平面相交确定的隐式点
 };
 
 #else

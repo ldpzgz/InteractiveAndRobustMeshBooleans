@@ -61,7 +61,13 @@ inline double computeMultiplier(const std::vector<double> &coords)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+/*
+* 使用并行排序，去除重复顶点
+* verts： output，是一个数组，保存从小到大排序后的顶点指针，顶点位于in_coords
+* tris： output，是一个映射，数组的下标是旧点in_coords数组的index，值对应的是verts中的index
+* arena：init初始化为原来的顶点数组的大小，保存去除了重复顶点的顶点。
+    
+*/
 inline void mergeDuplicatedVertices(const std::vector<double> &in_coords, const std::vector<uint> &in_tris,
                                     point_arena& arena, std::vector<genericPoint*> &verts, std::vector<uint> &tris,
                                     bool parallel)
@@ -80,7 +86,7 @@ inline void mergeDuplicatedVertices(const std::vector<double> &in_coords, const 
 
         tbb::parallel_sort(sorted.begin(), sorted.end(), [in_vecs](auto a, auto b)
         {
-            return in_vecs[a] < in_vecs[b];
+            return in_vecs[a] < in_vecs[b];//std::array<> 可以直接比较大小吗？这个工程里面提供了他们比较大小的函数
         });
 
         std::vector<uint> lookup = std::vector<uint>(sorted.size());

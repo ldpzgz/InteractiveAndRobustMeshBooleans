@@ -86,8 +86,8 @@ inline void booleanPipeline(const std::vector<double> &in_coords, const std::vec
     std::vector<genericPoint*> arr_verts; // <- it contains the original expl verts + the new_impl verts
     std::vector<uint> arr_in_tris, arr_out_tris;
     std::vector<std::bitset<NBIT>> arr_in_labels;
-    std::vector<DuplTriInfo> dupl_triangles;
-    Labels labels;
+    std::vector<DuplTriInfo> dupl_triangles; //DuplTriInfo: t_id,l_id,w
+    Labels labels;//vector<bitset<32>> surface,vector<bitset<32>> inside, num
     std::vector<phmap::flat_hash_set<uint>> patches;
     cinolib::FOctree octree; // built with arr_in_tris and arr_in_labels
 
@@ -108,8 +108,8 @@ inline void customArrangementPipeline(const std::vector<double> &in_coords, cons
                                       point_arena& arena, std::vector<genericPoint *> &vertices, std::vector<uint> &arr_out_tris, Labels &labels,
                                       cinolib::FOctree &octree, std::vector<DuplTriInfo> &dupl_triangles)
 {
-    arr_in_labels.resize(in_labels.size());
-    std::bitset<NBIT> mask;
+    arr_in_labels.resize(in_labels.size());//每个三角形属于哪个mesh，每个三角形一个32位的标志，
+    std::bitset<NBIT> mask;//有mesh的位置为1，
 
     for(uint i = 0; i < in_labels.size(); i++)
     {
@@ -121,13 +121,21 @@ inline void customArrangementPipeline(const std::vector<double> &in_coords, cons
 
     initFPU();
     double multiplier = computeMultiplier(in_coords);
-
+    //vertices 保存的是去除了重复顶点的顶点指针（指向arena.init)，这些顶点是从小到大排好序的，
+    //arr_in_tris 是一个map，他的下标是in_coords的下标，值标识对应到vertices数组的下标。
+    //arena.init 保存了去除重复顶点的顶点。
     mergeDuplicatedVertices(in_coords, in_tris, arena, vertices, arr_in_tris, true);
 
+    //经过这个函数处理之后
+    //arr_in_tris 不再是一个map，就是去除重复三角形后的所有三角形的顶点的索引
+    //arr_in_labels 就是对应tris里面的三角形的标识（三角形属于哪个mesh)
+    //dupl_triangles 被删除的三角形的信息，
     customRemoveDegenerateAndDuplicatedTriangles(vertices, arr_in_tris, arr_in_labels, dupl_triangles, true);
 
+    //这个构造函数会构建边，jollyPoints，三角形平面等信息。
     TriangleSoup ts(arena, vertices, arr_in_tris, arr_in_labels, multiplier, true);
 
+    //使用八叉树检测三角形相交
     AuxiliaryStructure g;
     customDetectIntersections(ts, g.intersectionList(), octree);
 
@@ -142,7 +150,16 @@ inline void customArrangementPipeline(const std::vector<double> &in_coords, cons
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+/*
+* tris 是一个map，index是原始顶点的index，value是排序去重后的顶点的index
+* labels 原始的每一个三角形，属于哪个mesh
+* dupl_triangles: 保存的是重复的三角形{index，mesh_lable,w}数组，index是去除重复三角形后的某个三角形的第一个顶点的index，mesh_lable是这个被删除的三角形属于
+* 哪个mesh，w是这个被删除的三角形与index指向的三角形法线是否相同。
+* 经过这个函数处理之后，tris不再是一个map，就是去重后的最新的所有三角形顶点的索引，labels就是对应tris里面的三角形的标识（三角形属于哪个mesh)
+* 这两个数组的大小就是有效的三角形的个数（tris大小是有效顶点个数）
+* 去除了重复顶点之后，判断三角形是否重复，比较简单了，如果一个三角形的顶点索引与另外一个三角形的顶点索引完全相同，就是重复三角形
+* 如何判断顶点索引相同，给顶点索引排序，再判断就好了。
+*/
 void customRemoveDegenerateAndDuplicatedTriangles(const std::vector<genericPoint *> &verts, std::vector<uint> &tris,
                                                   std::vector<std::bitset<NBIT>> &labels, std::vector<DuplTriInfo> &dupl_triangles,
                                                   bool parallel)
@@ -154,7 +171,7 @@ void customRemoveDegenerateAndDuplicatedTriangles(const std::vector<genericPoint
         vec3i* data_orig_tris = (vec3i*)tris.data();
 
         // compute colinear
-        auto colinear = vector<bool>(num_orig_tris, false);
+        auto colinear = vector<bool>(num_orig_tris, false);//记录原始三角形中共线的三角形
         tbb::parallel_for((uint)0, num_orig_tris, [data_orig_tris, &colinear, &verts](uint t_id) {
             auto& t = data_orig_tris[t_id];
             colinear[t_id] = cinolib::points_are_colinear_3d(
@@ -163,7 +180,7 @@ void customRemoveDegenerateAndDuplicatedTriangles(const std::vector<genericPoint
                 verts[t[2]]->toExplicit3D().ptr());
         });
 
-        // loop as before by use simpler way
+        // loop as before by use simpler way，t_off是去除重复三角形之后的顶点索引，l_off是去除重复三角形之后的三角形索引
         uint t_off = 0, l_off = 0;
 
         phmap::flat_hash_map < std::array<uint, 3>, std::pair<uint, uint> > tris_map; // tri_vertices -> <l_off, t_off>
@@ -193,20 +210,20 @@ void customRemoveDegenerateAndDuplicatedTriangles(const std::vector<genericPoint
                 }
                 else // triangle already present
                 {
-                    uint pos = ins.first->second.first;
-                    labels[pos] |= l; // label for duplicates
+                    uint pos = ins.first->second.first;  //l_off
+                    labels[pos] |= l; // label for duplicates，标记一下，这个三角形，也可能属于另外一个mesh
                 }
 
                 if(!ins.second) // triangle already present -> save info about duplicates
                 {
-                    uint orig_tri_off = ins.first->second.second;
+                    uint orig_tri_off = ins.first->second.second; //t_off
 
-                    uint mesh_l = bitsetToUint(l);
+                    uint mesh_l = bitsetToUint(l); //mesh id
                     assert(mesh_l >= 0);
-
-                    uint curr_tri_verts[] = {v0_id, v1_id, v2_id};
-                    uint orig_tri_verts[] ={tris[orig_tri_off], tris[orig_tri_off +1], tris[orig_tri_off +2]};
-
+                    //下面这两三角形重复了，
+                    uint curr_tri_verts[] = {v0_id, v1_id, v2_id};//排序去重后的顶点索引
+                    uint orig_tri_verts[] ={tris[orig_tri_off], tris[orig_tri_off +1], tris[orig_tri_off +2]};//排序去重后的顶点索引
+                    //看看这两个三角形法线是否一样
                     bool w = consistentWinding(curr_tri_verts, orig_tri_verts);
 
                     dupl_triangles.push_back({orig_tri_off / 3, // original triangle id

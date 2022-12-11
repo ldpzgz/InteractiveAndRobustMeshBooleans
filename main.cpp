@@ -34,7 +34,11 @@
  *      http://pers.ge.imati.cnr.it/livesu/                                              *
  *                                                                                       *
  * ***************************************************************************************/
-
+#define NOMINMAX
+#ifdef _HAS_STD_BYTE
+#undef _HAS_STD_BYTE
+#endif
+#define _HAS_STD_BYTE 0
 #include "booleans.h"
 
 std::vector<std::string> files;
@@ -64,11 +68,11 @@ int main(int argc, char **argv)
 
     std::vector<double> in_coords, bool_coords;
     std::vector<uint> in_tris, bool_tris;
-    std::vector<uint> in_labels;
+    std::vector<uint> in_labels;//标记每个三角形属于那个mesh id（一个文件是一个mesh，第一个输入文件mesh的meshid 是0，第二个是1 以此类推）
     std::vector<std::bitset<NBIT>> bool_labels;
 
     loadMultipleFiles(files, in_coords, in_tris, in_labels);
-
+    //实现约束的三角形求交，bool运算两个功能
     booleanPipeline(in_coords, in_tris, in_labels, op, bool_coords, bool_tris, bool_labels);
 
     cinolib::write_OBJ(file_out.c_str(), bool_coords, bool_tris, {});

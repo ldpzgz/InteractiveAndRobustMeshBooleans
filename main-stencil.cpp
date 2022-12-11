@@ -34,7 +34,11 @@
  *      http://pers.ge.imati.cnr.it/livesu/                                              *
  *                                                                                       *
  * ***************************************************************************************/
-
+#define NOMINMAX
+#ifdef _HAS_STD_BYTE
+#undef _HAS_STD_BYTE
+#endif
+#define _HAS_STD_BYTE 0
 #include <thread>
 #include "booleans.h"
 
