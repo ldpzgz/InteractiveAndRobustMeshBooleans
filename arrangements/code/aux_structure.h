@@ -130,7 +130,9 @@ struct aux_point_map {
 #endif
     }
 };
-
+/*
+* 
+*/
 class AuxiliaryStructure
 {
     public:

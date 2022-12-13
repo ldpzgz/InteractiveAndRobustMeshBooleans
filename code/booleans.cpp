@@ -119,28 +119,48 @@ inline void customArrangementPipeline(const std::vector<double> &in_coords, cons
 
     initFPU();
     double multiplier = computeMultiplier(in_coords);
-    //vertices 保存的是去除了重复顶点的顶点指针（指向arena.init)，这些顶点是从小到大排好序的，
+    //vertices 一开始是空的的，这个函数处理之后,保存的是去除了重复顶点的顶点指针（指向arena.init)，这些顶点是从小到大排好序的，
     //arr_in_tris 是一个map，他的下标是in_coords的下标，值标识对应到vertices数组的下标。
     //arena.init 保存了去除重复顶点的顶点。
     mergeDuplicatedVertices(in_coords, in_tris, arena, vertices, arr_in_tris, true);
 
     //经过这个函数处理之后
+    //vertices: in, no change
     //arr_in_tris 不再是一个map，就是去除重复三角形后的所有三角形的顶点的索引
-    //arr_in_labels 就是对应tris里面的三角形的标识（三角形属于哪个mesh)
+    //arr_in_labels 就是对应tris里面的三角形的标识（三角形属于哪些mesh)
     //dupl_triangles 被删除的三角形的信息，
     customRemoveDegenerateAndDuplicatedTriangles(vertices, arr_in_tris, arr_in_labels, dupl_triangles, true);
 
     //这个构造函数会构建边，jollyPoints，三角形平面等信息。
+    //vertices: 去除了重复顶点的顶点指针（指向arena.init)，这些顶点是从小到大排好序的
+    //arr_in_tris: 去除重复三角形后的所有三角形的顶点的索引,index vertices
+    //arr_in_labels: 就是对应arr_in_tris里面的三角形的标识（三角形属于哪些mesh)
+    //multiplier: 放大倍数
+    //1 构造函数里面的init函数：把vertices中的顶点xyz都放大multiplier倍数
+    //2 构建边（这个不是半边）,按照边的顶点索引排序
+    //3 一个三角形对应一个平面，这个平面（xy，yz，xz）根据三角形的法线的最大那个值来确定
+    //这里用到了indirect断言gleSoup ts(arena, vertices, arr_in_tris, arr_in_labels, multiplier, true);
+    //填充edge：是一个pair（顶点1index，顶点2index）数组
+    //填充edge_map：key是edge（是一个pair），value是这个edge在edge数组里面的index
+    //初始化jolly point，jollyPoint就是几个与放大倍数有关的几个点
     TriangleSoup ts(arena, vertices, arr_in_tris, arr_in_labels, multiplier, true);
 
     //使用八叉树检测三角形相交
+    //g.intersectList 保存两两相交的三角形pair
+    //把ts里面的顶点取出来，建立一颗八叉树
+    //八叉树里面的item数组，八叉树的叶子节点只索引item数组
     AuxiliaryStructure g;
     customDetectIntersections(ts, g.intersectionList(), octree);
-
+    //初始化了AuxiliaryStructure里面的数组大小
     g.initFromTriangleSoup(ts);
 
+    //标记有跟别人相交的三角形
+    //标记共面的三角形
+    //标记跟别人共用一条边的相交三角形
     classifyIntersections(ts, arena, g);
-
+    
+    //把有跟别的三角形相交的，放到一个数组里面，随后三角化这些三角形
+    //没有跟别的相交的三角形，直接放到输出
     triangulation(ts, arena, g, arr_out_tris, labels.surface);
     ts.appendJollyPoints();
 

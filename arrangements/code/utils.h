@@ -182,6 +182,7 @@ struct bucket_arena {
 
 /*
 * 能装下各种类型的顶点的容器
+* init: 存储去除了重复顶点之后的顶点数据，其他地方会索引这些顶点数据。
 */
 struct point_arena {
   std::vector<explicitPoint3D> init;//保存去除了重复顶点的顶点，其他顶点指针指向这里

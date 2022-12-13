@@ -135,7 +135,7 @@ class TriangleSoup
 
         std::vector<uint>               &triangles;
         std::vector<std::bitset<NBIT>>  &tri_labels;
-        std::vector<Plane>              tri_planes;
+        std::vector<Plane>              tri_planes;//一个三角形对应一个平面，这个平面（xy，yz，xz）根据三角形的法线的最大那个值来确定
 
         std::vector<genericPoint*>      jolly_points;
 

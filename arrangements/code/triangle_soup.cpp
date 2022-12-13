@@ -66,7 +66,7 @@ inline void TriangleSoup::init(point_arena& arena, double multiplier, bool paral
                                                                                     vertX(v2_id), vertY(v2_id), vertZ(v2_id)));
         });
         
-        // triangles
+        // triangles,构建边（这个不是半边）,按照边的顶点索引排序
         auto edges = std::vector<Edge>(num_orig_tris * 3);
         for(uint t_id = 0; t_id < num_orig_tris; t_id++)
         {

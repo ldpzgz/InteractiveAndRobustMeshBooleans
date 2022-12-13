@@ -58,7 +58,7 @@ struct Node
     int children[3];
 };
 
-
+//树里面的一个Node，装的是一个三角形的三个顶点的索引，还有三个子节点的index
 class Tree
 {
     public:

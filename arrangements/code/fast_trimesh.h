@@ -82,7 +82,9 @@ struct iTri
     uint v[3];
     uint info = 0;
 };
-
+/*
+*  可以快速访问的三角形网格类
+*/
 class FastTrimesh
 {
     public:
@@ -207,9 +209,9 @@ class FastTrimesh
         inline void flipTri(uint t_id);
 
     private:
-        std::vector<iVtx>    vertices;
-        std::vector<iEdge>   edges;
-        std::vector<iTri>    triangles;
+        std::vector<iVtx>    vertices;//<point*,index> array
+        std::vector<iEdge>   edges;//<v_index1,v_index2> array
+        std::vector<iTri>    triangles;//v_idx1,v_idx2,v_idx3, triangle_idx
 
         std::vector< fmvector<uint> >    v2e;
         std::vector< fmvector<uint> >    e2t;

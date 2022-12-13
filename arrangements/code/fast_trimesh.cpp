@@ -446,7 +446,9 @@ inline void FastTrimesh::setTriNodeID(uint t_id, uint n_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+/*
+* 找到三角形t_id中除了v0_id,v1_id两个点外的第三个点
+*/
 inline uint FastTrimesh::triVertOppositeTo(uint t_id, uint v0_id, uint v1_id) const
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -702,7 +704,7 @@ inline void FastTrimesh::removeTris(const fmvector<uint> &t_ids)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//把一条边打断为两条边，把e_id这条边，用v_id与e_id上两个顶点组成的两条边替换
 inline void FastTrimesh::splitEdge(const uint  &e_id, uint v_id)
 {
     assert(e_id < edges.size() && "edge id out of range");
@@ -723,7 +725,7 @@ inline void FastTrimesh::splitEdge(const uint  &e_id, uint v_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//把一条边打断为两条边，把e_id这条边，用v_id与e_id上两个顶点组成的两条边替换
 inline void FastTrimesh::splitEdge(const uint  &e_id, uint v_id, Tree &tree)
 {
     assert(e_id < edges.size() && "edge id out of range");
