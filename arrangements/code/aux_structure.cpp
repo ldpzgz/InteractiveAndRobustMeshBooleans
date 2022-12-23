@@ -41,7 +41,7 @@
 
 #include "aux_structure.h"
 #include "utils.h"
-
+//init all kinds of array size in auxiliary,insert vertex-index  into v_map
 inline void AuxiliaryStructure::initFromTriangleSoup(TriangleSoup &ts)
 {
     num_original_vtx = ts.numVerts();
@@ -78,7 +78,7 @@ inline const std::vector<std::pair<uint, uint> > &AuxiliaryStructure::intersecti
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//add a vertex into a triangle,for intersect resolve
 inline bool AuxiliaryStructure::addVertexInTriangle(uint t_id, uint v_id)
 {
     assert(t_id < tri2pts.size());
@@ -90,7 +90,7 @@ inline bool AuxiliaryStructure::addVertexInTriangle(uint t_id, uint v_id)
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//add a vertex into a edge,if vertex belong to edge return false
 inline bool AuxiliaryStructure::addVertexInEdge(uint e_id, uint v_id)
 {
     assert(e_id < edge2pts.size());
@@ -115,7 +115,8 @@ inline bool AuxiliaryStructure::addSegmentInTriangle(uint t_id, const UIPair &se
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//a segment can be owned by several triangles
+//may be this segment is the intersect line of the two triangle
 inline void AuxiliaryStructure::addTrianglesInSegment(const UIPair &seg, uint tA_id, uint tB_id)
 {
     UIPair key_seg = uniquePair(seg);
@@ -133,7 +134,7 @@ inline void AuxiliaryStructure::addTrianglesInSegment(const UIPair &seg, uint tA
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//split a segment into two segment and update the seg2tris map
 inline void AuxiliaryStructure::splitSegmentInSubSegments(uint orig_v0, uint orig_v1, uint midpoint)
 {
     auto& tris = segmentTrianglesList(std::make_pair(orig_v0, orig_v1));
@@ -144,7 +145,7 @@ inline void AuxiliaryStructure::splitSegmentInSubSegments(uint orig_v0, uint ori
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//every triangle can record which triangles is coplane with it
 inline void AuxiliaryStructure::addCoplanarTriangles(uint ta, uint tb)
 {
     assert(ta != tb);
@@ -157,7 +158,7 @@ inline void AuxiliaryStructure::addCoplanarTriangles(uint ta, uint tb)
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//get all triangles which is coplanar with t_id triangle
 inline const auxvector<uint> &AuxiliaryStructure::coplanarTriangles(uint t_id) const
 {
     assert(t_id < coplanar_tris.size());
@@ -165,7 +166,7 @@ inline const auxvector<uint> &AuxiliaryStructure::coplanarTriangles(uint t_id) c
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//return is triangle t_id has coplanar
 inline bool AuxiliaryStructure::triangleHasCoplanars(uint t_id) const
 {
     assert(t_id < coplanar_tris.size());
@@ -181,7 +182,7 @@ inline void AuxiliaryStructure::setTriangleHasIntersections(uint t_id)
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//return if triangle t_id has intersections with other triangle
 inline bool AuxiliaryStructure::triangleHasIntersections(uint t_id) const
 {
     assert(t_id < tri_has_intersections.size());
@@ -198,7 +199,7 @@ inline const auxvector<uint> &AuxiliaryStructure::trianglePointsList(uint t_id) 
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//get vertex array belong to a edge
 inline const auxvector<uint> &AuxiliaryStructure::edgePointsList(uint e_id) const
 {
     assert(e_id < edge2pts.size());
@@ -206,7 +207,7 @@ inline const auxvector<uint> &AuxiliaryStructure::edgePointsList(uint e_id) cons
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//return a segment array which belong to the triangle t_id
 inline const auxvector<UIPair> &AuxiliaryStructure::triangleSegmentsList(uint t_id) const
 {
     assert(t_id < tri2segs.size());
@@ -214,7 +215,7 @@ inline const auxvector<UIPair> &AuxiliaryStructure::triangleSegmentsList(uint t_
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//return triangles array which own the seg 
 inline const auxvector<uint> &AuxiliaryStructure::segmentTrianglesList(const UIPair &seg) const
 {
     UIPair key_seg = uniquePair(seg);
@@ -226,7 +227,7 @@ inline const auxvector<uint> &AuxiliaryStructure::segmentTrianglesList(const UIP
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//add new vertex 
 inline std::pair<uint, bool> AuxiliaryStructure::addVertexInSortedList(const genericPoint *v, uint pos)
 {
     auto ins = v_map.insert({v, pos});

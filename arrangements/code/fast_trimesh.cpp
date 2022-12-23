@@ -53,7 +53,7 @@ inline FastTrimesh::FastTrimesh(const genericPoint *tv0, const genericPoint *tv1
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//根据输入的外部顶点与三角形信息，建立自己的顶点，边，三角形结构,这里的边不是半边
 inline FastTrimesh::FastTrimesh(const std::vector<genericPoint *> &in_verts, const std::vector<uint> &in_tris, bool parallel)
 {
     if(parallel)
@@ -152,7 +152,7 @@ inline void FastTrimesh::preAllocateSpace(uint estimated_num_verts)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//重置所有三角形的nodeid
 inline void FastTrimesh::resetTrianglesInfo()
 {
     for(uint t_id = 0; t_id < numTris(); t_id++)
@@ -190,7 +190,7 @@ inline Plane FastTrimesh::refPlane() const
 /************************************************************************************************
  *          VERTICES
  * *********************************************************************************************/
-
+//返回顶点v_id的point指针
 inline const genericPoint* FastTrimesh::vert(uint v_id) const
 {
     assert(v_id < vertices.size() && "vtx id out of range");
@@ -198,7 +198,7 @@ inline const genericPoint* FastTrimesh::vert(uint v_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回new_v_id的重复顶点的id，一个顶点只能有一个重复顶点
 inline uint FastTrimesh::vertOrigID(uint new_v_id) const
 {
     assert(new_v_id < vertices.size() && "vtx id out of range");
@@ -206,7 +206,7 @@ inline uint FastTrimesh::vertOrigID(uint new_v_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回orig_v_id的重复顶点的id,一个顶点只能有一个重复顶点
 inline  uint FastTrimesh::vertNewID(uint orig_v_id) const
 {
     auto it = rev_vtx_map.find(orig_v_id);
@@ -216,7 +216,7 @@ inline  uint FastTrimesh::vertNewID(uint orig_v_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//有多少条边共用了顶点v_id
 inline uint FastTrimesh::vertValence(uint v_id) const
 {
     assert(v_id < vertices.size() && "vtx id out of range");
@@ -224,7 +224,7 @@ inline uint FastTrimesh::vertValence(uint v_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回一个数组，共用了顶点v_id的所有边的ids
 inline const fmvector<uint> &FastTrimesh::adjV2E(uint v_id) const
 {
     assert(v_id < vertices.size() && "vtx id out of range");
@@ -232,7 +232,7 @@ inline const fmvector<uint> &FastTrimesh::adjV2E(uint v_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回一个数组，里面是共用顶点v_id的所有三角形的id
 inline fmvector<uint> FastTrimesh::adjV2T(uint v_id) const
 {
     assert(v_id < vertices.size() && "vtx id out of range");
@@ -255,7 +255,8 @@ inline void FastTrimesh::resetVerticesInfo()
     for(auto &v : vertices)
         v.info = 0;
 }
-
+//设置顶点的额外的一个uint信息，算是顶点属性吧
+//用于存储origin顶点的id（重复顶点）
 inline void FastTrimesh::setVertInfo(const uint v_id, const uint info)
 {
     assert(v_id < vertices.size() && "vtx id out of range");
@@ -263,7 +264,7 @@ inline void FastTrimesh::setVertInfo(const uint v_id, const uint info)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回顶点v_id的info（通常是跟它重复的origin顶点的id)
 inline uint FastTrimesh::vertInfo(const uint v_id) const
 {
     assert(v_id < vertices.size() && "vtx id out of range");
@@ -273,7 +274,7 @@ inline uint FastTrimesh::vertInfo(const uint v_id) const
 /************************************************************************************************
  *          EDGES
  * *********************************************************************************************/
-
+//返回一个pair<int,int>,是边e_id的两个顶点的id
 inline const std::pair<uint, uint> &FastTrimesh::edge(uint e_id) const
 {
     assert(e_id < edges.size() && "edge id out of range");
@@ -281,7 +282,7 @@ inline const std::pair<uint, uint> &FastTrimesh::edge(uint e_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回边e_id的第0个或者第1个顶点的id
 inline uint FastTrimesh::edgeVertID(uint e_id, uint off) const
 {
     assert(e_id < edges.size() && "edge id out of range");
@@ -290,7 +291,7 @@ inline uint FastTrimesh::edgeVertID(uint e_id, uint off) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//根据两个顶点id，返回这两个顶点组成的边的id,类里面有顶点-边的map
 inline int FastTrimesh::edgeID(uint ev0_id, uint ev1_id) const
 {
     assert(ev0_id != ev1_id && "edge with equal endpoints");
@@ -306,7 +307,7 @@ inline int FastTrimesh::edgeID(uint ev0_id, uint ev1_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//判断边是否被访问过
 inline bool FastTrimesh::edgeIsConstr(uint e_id) const
 {
     assert(e_id < edges.size() && "edge id out of range");
@@ -314,7 +315,7 @@ inline bool FastTrimesh::edgeIsConstr(uint e_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//设置边被访问了
 inline void FastTrimesh::setEdgeConstr(uint e_id)
 {
     assert(e_id < edges.size() && "edge id out of range");
@@ -322,7 +323,7 @@ inline void FastTrimesh::setEdgeConstr(uint e_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回三角形t_id中顶点v_id对面的那条边的id
 inline uint FastTrimesh::edgeOppToVert(uint t_id, uint v_id) const
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -338,7 +339,7 @@ inline uint FastTrimesh::edgeOppToVert(uint t_id, uint v_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//边e_id是不是有1个三角形共用它
 inline bool FastTrimesh::edgeIsBoundary(uint e_id) const
 {
     assert(e_id < edges.size() && "edge id out of range");
@@ -346,7 +347,7 @@ inline bool FastTrimesh::edgeIsBoundary(uint e_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//边e_id是不是有两个三角形共用它
 inline bool FastTrimesh::edgeIsManifold(uint e_id) const
 {
     assert(e_id < edges.size() && "edge id out of range");
@@ -354,7 +355,7 @@ inline bool FastTrimesh::edgeIsManifold(uint e_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回共用了边e_id的三角形，最多两个
 inline const fmvector<uint> &FastTrimesh::adjE2T(uint e_id) const
 {
     assert(e_id < edges.size() && "edge id out of range");
@@ -362,7 +363,7 @@ inline const fmvector<uint> &FastTrimesh::adjE2T(uint e_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//设置边被访问了
 inline void FastTrimesh::edgeSetVisited(uint e_id, const bool &vis)
 {
     assert(e_id < edges.size() && "edge id out of range");
@@ -370,7 +371,7 @@ inline void FastTrimesh::edgeSetVisited(uint e_id, const bool &vis)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//判断边是否被访问过
 inline bool FastTrimesh::edgeIsVisited(uint e_id) const
 {
     assert(e_id < edges.size() && "edge id out of range");
@@ -381,7 +382,7 @@ inline bool FastTrimesh::edgeIsVisited(uint e_id) const
 /************************************************************************************************
  *          TRIANGLES
  * *********************************************************************************************/
-
+//返回三角形t_id的三个顶点的id的数组的地址
 inline const uint *FastTrimesh::tri(uint t_id) const
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -389,7 +390,7 @@ inline const uint *FastTrimesh::tri(uint t_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//根据三个顶点的id得到三角形的id，如果不存在返回-1
 inline int FastTrimesh::triID(uint tv0_id, uint tv1_id, uint tv2_id) const
 {
     assert((tv0_id < vertices.size() && tv1_id < vertices.size() && tv2_id < vertices.size()) && "vtx id out of range");
@@ -405,7 +406,7 @@ inline int FastTrimesh::triID(uint tv0_id, uint tv1_id, uint tv2_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回三角形t_id的第off（0，1，2）个顶点的id
 inline uint FastTrimesh::triVertID(uint t_id, uint off) const
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -413,7 +414,7 @@ inline uint FastTrimesh::triVertID(uint t_id, uint off) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回三角形t_id的第off（0，1，2）个顶点的顶点指针
 inline const genericPoint *FastTrimesh::triVert(uint t_id, uint off) const
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -422,7 +423,7 @@ inline const genericPoint *FastTrimesh::triVert(uint t_id, uint off) const
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回三角形t_id的第off（0，1，2）条边的id
 inline int FastTrimesh::triEdgeID(uint t_id, uint off) const
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -430,7 +431,7 @@ inline int FastTrimesh::triEdgeID(uint t_id, uint off) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//三角形的nodeid存储在三角形的info上
 inline uint FastTrimesh::triNodeID(uint t_id) const
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -438,7 +439,7 @@ inline uint FastTrimesh::triNodeID(uint t_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//三角形的nodeid存储在三角形的info上
 inline void FastTrimesh::setTriNodeID(uint t_id, uint n_id)
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -466,7 +467,7 @@ inline uint FastTrimesh::triVertOppositeTo(uint t_id, uint v0_id, uint v1_id) co
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回于三角形t_id共用同一条边e_id的另外一个三角形，如果没有返回-1
 inline int FastTrimesh::triOppToEdge(uint e_id, uint t_id) const
 {
     assert(e_id < edges.size() && "edge id out of range");
@@ -485,7 +486,7 @@ inline int FastTrimesh::triOppToEdge(uint e_id, uint t_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回三角形t_id的三条边的id
 inline fmvector<uint> FastTrimesh::adjT2E(uint t_id) const
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -494,7 +495,7 @@ inline fmvector<uint> FastTrimesh::adjT2E(uint t_id) const
             static_cast<uint>(triEdgeID(t_id, 1)),
             static_cast<uint>(triEdgeID(t_id, 2))};
 }
-
+//返回所有的三角形的边id
 inline std::vector<std::array<uint, 3>> FastTrimesh::adjT2EAll(bool parallel) const {
     if(parallel) {
         std::vector<std::array<uint, 3>> adjT2E(triangles.size());
@@ -516,7 +517,7 @@ inline std::vector<std::array<uint, 3>> FastTrimesh::adjT2EAll(bool parallel) co
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回与三角形t_id相邻的所有三角形的id
 inline fmvector<uint> FastTrimesh::adjT2T(uint t_id) const
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -535,7 +536,8 @@ inline fmvector<uint> FastTrimesh::adjT2T(uint t_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//根据两个顶点的前后关系，判断这个三角形是不是逆时针的
+//逆时针的顶点顺序是0，1，2
 inline bool FastTrimesh::triVertsAreCCW(uint t_id, uint curr_v_id, uint prev_v_id) const
 {
     uint prev_off = triVertOffset(t_id, prev_v_id);
@@ -545,7 +547,7 @@ inline bool FastTrimesh::triVertsAreCCW(uint t_id, uint curr_v_id, uint prev_v_i
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//判断t_id这个三角形在它的投影平面上是顺时针还是逆时针
 inline int FastTrimesh::triOrientation(uint t_id) const
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -558,7 +560,7 @@ inline int FastTrimesh::triOrientation(uint t_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//判断顶点v_id是否在三角形t_id中
 inline bool FastTrimesh::triContainsVert(uint t_id, uint v_id) const
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -570,7 +572,7 @@ inline bool FastTrimesh::triContainsVert(uint t_id, uint v_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//如果顶点v_id在三角形t_id中，返回它是三角形中的第几个点（0，1，2）
 inline uint FastTrimesh::triVertOffset(uint t_id, uint v_id) const
 {
     for(uint off = 0; off < 3; off++)
@@ -581,7 +583,7 @@ inline uint FastTrimesh::triVertOffset(uint t_id, uint v_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//拿到三角形t_id的额外的uint
 inline uint FastTrimesh::triInfo(uint t_id) const
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -589,7 +591,7 @@ inline uint FastTrimesh::triInfo(uint t_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//为三角形t_id设置一个额外的uint，每个三角形都可以设置一个
 inline void FastTrimesh::setTriInfo(uint t_id, uint val)
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -599,7 +601,7 @@ inline void FastTrimesh::setTriInfo(uint t_id, uint val)
 /************************************************************************************************
  *          MESH MANIPULATION
  * **********************************************************************************************/
-
+//添加顶点，这个顶点是某个顶点orig_v_id的重复
 inline uint FastTrimesh::addVert(const genericPoint *v, uint orig_v_id)
 {
     uint v_id = static_cast<uint>(vertices.size());
@@ -612,7 +614,7 @@ inline uint FastTrimesh::addVert(const genericPoint *v, uint orig_v_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//添加顶点，但是这个顶点的index设置为0了
 inline void FastTrimesh::addVert(const genericPoint *v)
 {
     vertices.emplace_back(v, 0);
@@ -620,7 +622,8 @@ inline void FastTrimesh::addVert(const genericPoint *v)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//根据三个顶点id构建一个三角形，同时构建相应的边，跟新e2t索引
+//如果三角形已经存在直接返回它的id
 inline uint FastTrimesh::addTri(uint tv0_id, uint tv1_id, uint tv2_id)
 {
     assert((tv0_id < vertices.size() && tv1_id < vertices.size() && tv2_id < vertices.size()) && "vtx id out of range");
@@ -646,7 +649,7 @@ inline uint FastTrimesh::addTri(uint tv0_id, uint tv1_id, uint tv2_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//删除边e_id，其实是删除两个三角形（或者1个）
 inline void FastTrimesh::removeEdge(uint e_id)
 {
     assert(e_id < edges.size() && "edge id out of range");
@@ -654,7 +657,11 @@ inline void FastTrimesh::removeEdge(uint e_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//先找到三角形的三条边，删除每条边e2t里面的t_id，
+//遍历这三条边，每条边取出两个顶点，如果这个边已经没有三角形了，
+//在v2e里面删除这条边，
+//移除每一条边（边占用的空间）。
+//最后移除这个三角形（三角形占用的空间）
 inline void FastTrimesh::removeTri(uint t_id)
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -688,14 +695,14 @@ inline void FastTrimesh::removeTri(uint t_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//先给t_ids数组排序，再移除每一个三角形
 inline void FastTrimesh::removeTris(const std::vector<uint> &t_ids)
 {
     std::vector<uint> tmp_t_ids = t_ids;
     std::sort(tmp_t_ids.rbegin(), tmp_t_ids.rend());
     for(uint &t_id : tmp_t_ids) removeTri(t_id);
 }
-
+//先给t_ids数组排序，再移除每一个三角形
 inline void FastTrimesh::removeTris(const fmvector<uint> &t_ids)
 {
     fmvector<uint> tmp_t_ids = t_ids;
@@ -755,7 +762,7 @@ inline void FastTrimesh::splitEdge(const uint  &e_id, uint v_id, Tree &tree)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//将三角形t_id划分为三个子三角形，删掉这个三角形t_id
 inline void FastTrimesh::splitTri(uint t_id, uint v_id)
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -769,7 +776,7 @@ inline void FastTrimesh::splitTri(uint t_id, uint v_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//将三角形t_id划分为三个子三角形，删掉这个三角形t_id
 inline void FastTrimesh::splitTri(uint t_id, uint v_id, Tree &tree)
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -795,7 +802,7 @@ inline void FastTrimesh::splitTri(uint t_id, uint v_id, Tree &tree)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//翻转三角形，交换两个顶点的位置而已，顺时针变逆时针或者相反
 inline void FastTrimesh::flipTri(uint t_id)
 {
     assert(t_id < triangles.size() && "tri id out of range");
@@ -808,7 +815,9 @@ inline void FastTrimesh::flipTri(uint t_id)
 /***********************************************************************************************
  *          PRIVATE METHODS
  * ********************************************************************************************/
-
+//根据两个顶点id，创建一条边，如果边已经存在直接返回它的id
+//会完善其他的顶点-边索引，e2t数组会新增一个成员
+//返回新增的边的id=edges.size();
 inline int FastTrimesh::addEdge(uint ev0_id, uint ev1_id)
 {
     int e_id = edgeID(ev0_id, ev1_id);
@@ -826,7 +835,7 @@ inline int FastTrimesh::addEdge(uint ev0_id, uint ev1_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//判断边e_id是否包含v_id这个顶点
 inline bool FastTrimesh::edgeContainsVert(uint e_id, uint v_id) const
 {
     if(edges[e_id].v.first == v_id) return true;
@@ -835,14 +844,14 @@ inline bool FastTrimesh::edgeContainsVert(uint e_id, uint v_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//删除数组vec中所有值为elem的元素
 inline void FastTrimesh::removeFromVec(fmvector<uint> &vec, uint elem)
 {
     vec.erase(std::remove(vec.begin(), vec.end(), elem), vec.end());
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//交换两个三角形在各种数组中的位置
 inline void FastTrimesh::triSwitch(uint t0_id, uint t1_id)
 {
     if(t0_id == t1_id) return;
@@ -866,7 +875,8 @@ inline void FastTrimesh::triSwitch(uint t0_id, uint t1_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//交换两条边在各种数组中的位置，边所在的数组的索引要交换，边对应的三角形数组里面也要交换
+//边上的顶点，顶点对应的边的数组里面也要交换。
 inline void FastTrimesh::edgeSwitch(uint e0_id, const uint e1_id)
 {
     if(e0_id == e1_id) return;
@@ -892,7 +902,7 @@ inline void FastTrimesh::edgeSwitch(uint e0_id, const uint e1_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//通过与最后一条边交换的方式，移除一条边
 inline void FastTrimesh::removeEdgeUnref(uint e_id)
 {
     e2t[e_id].clear();
@@ -902,7 +912,7 @@ inline void FastTrimesh::removeEdgeUnref(uint e_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//通过与最后一个三角形交换的方式移除一个三角形
 inline void FastTrimesh::removeTriUnref(uint t_id)
 {
     triSwitch(t_id, static_cast<uint>(triangles.size() -1));

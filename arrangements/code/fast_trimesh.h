@@ -209,18 +209,18 @@ class FastTrimesh
         inline void flipTri(uint t_id);
 
     private:
-        std::vector<iVtx>    vertices;//<point*,index> array
-        std::vector<iEdge>   edges;//<v_index1,v_index2> array
-        std::vector<iTri>    triangles;//v_idx1,v_idx2,v_idx3, triangle_idx
+        std::vector<iVtx>    vertices;//里面的成员是(顶点指针，以及顶点的info(uint 重复顶点的index))
+        std::vector<iEdge>   edges;//里面的成员是两个顶点id，以及一个是否被访问过的标志
+        std::vector<iTri>    triangles;//三个顶点的index，以及一个info（uint,nodeid in tree）
 
-        std::vector< fmvector<uint> >    v2e;
-        std::vector< fmvector<uint> >    e2t;
+        std::vector< fmvector<uint> >    v2e;//是一个map，key是顶点的id，value是共用这个顶点的边的ids,
+        std::vector< fmvector<uint> >    e2t;//是一个vector map，key是边的id，value是共用这条边的三角形的ids,共用一条边的三角形可能不止2个,与edges数组一样的大小
 
-        phmap::flat_hash_map <uint, uint> rev_vtx_map;
+        phmap::flat_hash_map <uint, uint> rev_vtx_map;//记录重复顶点，一个顶点只能记录一个重复顶点
 
         Plane triangle_plane;
 
-        // PRIVATE METHODS
+        
         inline int addEdge(uint ev0_id, uint ev1_id);
 
         inline bool edgeContainsVert(uint e_id, uint v_id) const;

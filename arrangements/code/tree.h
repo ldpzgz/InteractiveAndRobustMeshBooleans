@@ -58,7 +58,7 @@ struct Node
     int children[3];
 };
 
-//树里面的一个Node，装的是一个三角形的三个顶点的索引，还有三个子节点的index
+//树里面has一个Node数组，a node装的是一个三角形的三个顶点的索引，还有三个子节点(在node数组里面的index)
 class Tree
 {
     public:
@@ -69,7 +69,7 @@ class Tree
         {
             nodes.reserve(size);
         }
-
+        //用三个顶点的index 构造一个节点，添加到节点数组的末尾
         inline uint addNode(const uint &v0, const uint &v1, const uint &v2)
         {
             nodes.emplace_back(v0, v1, v2);
@@ -81,7 +81,7 @@ class Tree
             assert(node_id < nodes.size() && "out fo range node id");
             return nodes[node_id];
         }
-
+        //吧co，c1两个节点作为node_id的子节点（node_id必须还没有子节点）
         inline void addChildren(const uint &node_id, const uint &c0, const uint &c1)
         {
             assert(node_id < nodes.size() && "out fo range node id");
@@ -90,7 +90,7 @@ class Tree
             nodes[node_id].children[0] = static_cast<int>(c0);
             nodes[node_id].children[1] = static_cast<int>(c1);
         }
-
+        //吧co，c1,c2两个节点作为node_id的子节点（node_id必须还没有子节点）
         inline void addChildren(const uint &node_id, const uint &c0, const uint &c1, const uint &c2)
         {
             assert(node_id < nodes.size() && "out fo range node id");

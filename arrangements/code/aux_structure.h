@@ -131,7 +131,7 @@ struct aux_point_map {
     }
 };
 /*
-* 
+* a help struct for resove intersect triangles
 */
 class AuxiliaryStructure
 {
@@ -186,14 +186,14 @@ class AuxiliaryStructure
         int     num_intersections;
         uint    num_tpi;
 
-        std::vector< std::pair<uint, uint> > intersection_list;
+        std::vector< std::pair<uint, uint> > intersection_list;//a pair<uint,uint> indicate a intersect triangles
         std::vector< auxvector<uint> > coplanar_tris;
-        std::vector< auxvector<uint> > tri2pts;
-        std::vector< auxvector<uint> > edge2pts;
-        std::vector< auxvector<UIPair> > tri2segs;
-        phmap::flat_hash_map< UIPair, auxvector<uint>  > seg2tris;
-        std::vector<bool> tri_has_intersections;
-        aux_point_map<uint> v_map;
+        std::vector< auxvector<uint> > tri2pts;//new vertexes can be inserted to a triangle
+        std::vector< auxvector<uint> > edge2pts;//a edge can own more than two verterx,new vertexes can be inserted to a edge because of intersection
+        std::vector< auxvector<UIPair> > tri2segs;//new segment can be inserted to a triangle
+        phmap::flat_hash_map< UIPair, auxvector<uint>  > seg2tris;//a segment can be owned by many triangles
+        std::vector<bool> tri_has_intersections;// a triangle a flag which indicate wether the triangle has intersected with other triangles.
+        aux_point_map<uint> v_map;//vertex to it's index
         phmap::flat_hash_set< std::vector<uint> > visited_pockets;
         phmap::flat_hash_map< std::vector<uint>, uint> pockets_map;
 

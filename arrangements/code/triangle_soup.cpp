@@ -38,7 +38,8 @@
 #include "triangle_soup.h"
 
 #include <tbb/tbb.h>
-
+//contruct edges and sort edges and evaluate triangle planes(a triangle mostly close to)
+//and convert all vertex(scaled by multiplier) to explict
 inline void TriangleSoup::init(point_arena& arena, double multiplier, bool parallel)
 {
     if (parallel) {
@@ -208,7 +209,7 @@ inline uint TriangleSoup::addImplVert(genericPoint* gp)
 /*******************************************************************************************************
  *      EDGES
  * ****************************************************************************************************/
-
+//return edge index in edges
 inline int TriangleSoup::edgeID(uint v0_id, uint v1_id) const
 {
     auto it = edge_map.find(uniqueEdge(v0_id, v1_id));
@@ -218,7 +219,7 @@ inline int TriangleSoup::edgeID(uint v0_id, uint v1_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//return the pointer of vertex which is the first or second vertex of edge e_id.
 inline const genericPoint* TriangleSoup::edgeVert(uint e_id, uint off) const
 {
     assert(e_id < edges.size() && "e_id out of range");
@@ -227,7 +228,7 @@ inline const genericPoint* TriangleSoup::edgeVert(uint e_id, uint off) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//return the double pointer of vertex which is the first or second vertex of edge e_id.
 inline const double* TriangleSoup::edgeVertPtr(uint e_id, uint off) const
 {
     assert(e_id < edges.size() && "e_id out of range");
@@ -236,7 +237,7 @@ inline const double* TriangleSoup::edgeVertPtr(uint e_id, uint off) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//return the edge opposite to v_id in triangle t_id
 inline uint TriangleSoup::edgeOppositeToVert(uint t_id, uint v_id) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -253,7 +254,7 @@ inline uint TriangleSoup::edgeOppositeToVert(uint t_id, uint v_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//add a edge into edges,if the edge is exist,then do nothing
 inline void TriangleSoup::addEdge(uint v0_id, uint v1_id)
 {
     uint tmp_id = static_cast<uint>(edges.size());
@@ -274,7 +275,7 @@ const std::vector<uint>& TriangleSoup::trisVector() const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//return the pointer of the vertex index of the triangle t_id
 inline const uint* TriangleSoup::tri(uint t_id) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -282,7 +283,7 @@ inline const uint* TriangleSoup::tri(uint t_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回一个三角形t_id的第（0，1，2）个顶点的index
 inline uint TriangleSoup::triVertID(uint t_id, uint off) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -290,7 +291,7 @@ inline uint TriangleSoup::triVertID(uint t_id, uint off) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回一个三角形t_id的第（0，1，2）个顶点的pointer
 inline const genericPoint* TriangleSoup::triVert(uint t_id, uint off) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -298,7 +299,8 @@ inline const genericPoint* TriangleSoup::triVert(uint t_id, uint off) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//返回一个三角形t_id的第（0，1，2）个顶点的double pointer
+//if vertex is implicit , translate it to explicit point
 inline const double* TriangleSoup::triVertPtr(uint t_id, uint off) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -306,7 +308,7 @@ inline const double* TriangleSoup::triVertPtr(uint t_id, uint off) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//return a edge(off,off+1) of a triangle t_id
 inline uint TriangleSoup::triEdgeID(uint t_id, uint off) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -318,7 +320,7 @@ inline uint TriangleSoup::triEdgeID(uint t_id, uint off) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//return the most closed plane(xy or yz or zx) of the triangle t_id 
 inline Plane TriangleSoup::triPlane(uint t_id) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -326,7 +328,7 @@ inline Plane TriangleSoup::triPlane(uint t_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//return true if the v_id is a vertex of the triangle t_id
 inline bool TriangleSoup::triContainsVert(uint t_id, uint v_id) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -339,14 +341,14 @@ inline bool TriangleSoup::triContainsVert(uint t_id, uint v_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//return   true if the edge(a pair<ev0_id,ev1_id>) is belong to triangle t_id
 inline bool TriangleSoup::triContainsEdge(const uint t_id, uint ev0_id, uint ev1_id) const
 {
     return (triContainsVert(t_id, ev0_id) && triContainsVert(t_id, ev1_id));
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//get the lable of a triangle t_id, a lable indicate the triangle t_id belong to which mesh
 inline std::bitset<NBIT> TriangleSoup::triLabel(uint t_id) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -388,7 +390,7 @@ inline void TriangleSoup::initJollyPoints(point_arena& arena, double multiplier)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//边 is a pair<v0_id,v1_id>  , and v0_id<v1_id
 inline Edge TriangleSoup::uniqueEdge(uint v0_id, uint v1_id) const
 {
     if(v0_id < v1_id) return {v0_id, v1_id};

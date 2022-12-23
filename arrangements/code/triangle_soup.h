@@ -59,7 +59,11 @@ using EdgeMap = phmap::flat_hash_map<K, V>;
 class TriangleSoup
 {
     public:
-
+        //arena:  contains the original points array,no overlapped
+        //in_vertices: vertice pointer array, the pointer point to arena.init
+        //in_tris: triangles array, no overlapped ,a triangle consist of three verter indexes
+        //labels: lable array, a lable indicate that a triangle belong to which meshes
+        //multiplier: is a scale value, all vertexes in arena will be sacled by this value.
         inline TriangleSoup(point_arena& arena, std::vector<genericPoint*> &in_vertices, std::vector<uint> &in_tris, std::vector< std::bitset<NBIT> > &labels, double multiplier, bool parallel)
             : vertices(in_vertices), triangles(in_tris), tri_labels(labels)
         {
@@ -129,17 +133,17 @@ class TriangleSoup
 
     private:
 
-        std::vector<genericPoint*>      &vertices;
+        std::vector<genericPoint*>      &vertices;//顶点指针数组
 
-        std::vector<Edge>               edges;
+        std::vector<Edge>               edges;//边数组，一条边是两个顶点的id，id是排好序的，一小一大, every edge is unique
 
-        std::vector<uint>               &triangles;
-        std::vector<std::bitset<NBIT>>  &tri_labels;
-        std::vector<Plane>              tri_planes;//一个三角形对应一个平面，这个平面（xy，yz，xz）根据三角形的法线的最大那个值来确定
+        std::vector<uint>               &triangles;//三角形数组，一个三角形用3个顶点id来表示
+        std::vector<std::bitset<NBIT>>  &tri_labels;//三角形的标志，一个标志表示三角形属于哪些mesh
+        std::vector<Plane>              tri_planes;//一个三角形对应一个它最靠近的平面，这个平面（xy，yz，xz）根据三角形的法线的最大那个值来确定
 
         std::vector<genericPoint*>      jolly_points;
 
-        EdgeMap <Edge, uint> edge_map;
+        EdgeMap <Edge, uint> edge_map;//key is pair<v0,v1>,value is the index of the edge in the array edges
 
         uint num_orig_vtxs;
         uint num_orig_tris;
