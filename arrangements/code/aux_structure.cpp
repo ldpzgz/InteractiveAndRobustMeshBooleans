@@ -78,7 +78,7 @@ inline const std::vector<std::pair<uint, uint> > &AuxiliaryStructure::intersecti
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//add a vertex into a triangle,for intersect resolve
+//把一个点插入到三角形t_id里面
 inline bool AuxiliaryStructure::addVertexInTriangle(uint t_id, uint v_id)
 {
     assert(t_id < tri2pts.size());
@@ -90,7 +90,7 @@ inline bool AuxiliaryStructure::addVertexInTriangle(uint t_id, uint v_id)
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//add a vertex into a edge,if vertex belong to edge return false
+//把一个点插入到e_id这条边里面
 inline bool AuxiliaryStructure::addVertexInEdge(uint e_id, uint v_id)
 {
     assert(e_id < edge2pts.size());
@@ -102,7 +102,7 @@ inline bool AuxiliaryStructure::addVertexInEdge(uint e_id, uint v_id)
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//把一条线段插入到三角形t_id里面，线段用两个点的索引来表示
 inline bool AuxiliaryStructure::addSegmentInTriangle(uint t_id, const UIPair &seg)
 {
     assert(t_id < tri2segs.size());
@@ -115,8 +115,7 @@ inline bool AuxiliaryStructure::addSegmentInTriangle(uint t_id, const UIPair &se
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//a segment can be owned by several triangles
-//may be this segment is the intersect line of the two triangle
+//把一条线段跟两个三角形关联起来，表面这个线段是这两个三角形的交线，
 inline void AuxiliaryStructure::addTrianglesInSegment(const UIPair &seg, uint tA_id, uint tB_id)
 {
     UIPair key_seg = uniquePair(seg);
@@ -134,7 +133,7 @@ inline void AuxiliaryStructure::addTrianglesInSegment(const UIPair &seg, uint tA
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//split a segment into two segment and update the seg2tris map
+//把一条线段一分为二，更新新线段的seg2tris信息。
 inline void AuxiliaryStructure::splitSegmentInSubSegments(uint orig_v0, uint orig_v1, uint midpoint)
 {
     auto& tris = segmentTrianglesList(std::make_pair(orig_v0, orig_v1));
@@ -145,7 +144,7 @@ inline void AuxiliaryStructure::splitSegmentInSubSegments(uint orig_v0, uint ori
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//every triangle can record which triangles is coplane with it
+//每一个三角形都记录哪些三角形跟他共面
 inline void AuxiliaryStructure::addCoplanarTriangles(uint ta, uint tb)
 {
     assert(ta != tb);
@@ -158,7 +157,7 @@ inline void AuxiliaryStructure::addCoplanarTriangles(uint ta, uint tb)
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//get all triangles which is coplanar with t_id triangle
+//获取跟t_id这个三角形共面的其他三角形
 inline const auxvector<uint> &AuxiliaryStructure::coplanarTriangles(uint t_id) const
 {
     assert(t_id < coplanar_tris.size());
@@ -166,7 +165,7 @@ inline const auxvector<uint> &AuxiliaryStructure::coplanarTriangles(uint t_id) c
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//return is triangle t_id has coplanar
+//t_id这个三角形是否有跟其他三角形共面，
 inline bool AuxiliaryStructure::triangleHasCoplanars(uint t_id) const
 {
     assert(t_id < coplanar_tris.size());
@@ -174,7 +173,7 @@ inline bool AuxiliaryStructure::triangleHasCoplanars(uint t_id) const
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//设置三角形有与其他三角形相交
 inline void AuxiliaryStructure::setTriangleHasIntersections(uint t_id)
 {
     assert(t_id < tri_has_intersections.size());
@@ -182,7 +181,7 @@ inline void AuxiliaryStructure::setTriangleHasIntersections(uint t_id)
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//return if triangle t_id has intersections with other triangle
+//返回三角形t_id是否有与其他三角形相交
 inline bool AuxiliaryStructure::triangleHasIntersections(uint t_id) const
 {
     assert(t_id < tri_has_intersections.size());
@@ -191,7 +190,7 @@ inline bool AuxiliaryStructure::triangleHasIntersections(uint t_id) const
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//获取插入到三角形里面的所有点
 inline const auxvector<uint> &AuxiliaryStructure::trianglePointsList(uint t_id) const
 {
     assert(t_id < tri2pts.size());
@@ -199,7 +198,7 @@ inline const auxvector<uint> &AuxiliaryStructure::trianglePointsList(uint t_id) 
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//get vertex array belong to a edge
+//获取插入到e_id边里面的所有点
 inline const auxvector<uint> &AuxiliaryStructure::edgePointsList(uint e_id) const
 {
     assert(e_id < edge2pts.size());
@@ -207,7 +206,7 @@ inline const auxvector<uint> &AuxiliaryStructure::edgePointsList(uint e_id) cons
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//return a segment array which belong to the triangle t_id
+//返回插入到三角形t_id里面的所有线段
 inline const auxvector<UIPair> &AuxiliaryStructure::triangleSegmentsList(uint t_id) const
 {
     assert(t_id < tri2segs.size());
@@ -215,7 +214,7 @@ inline const auxvector<UIPair> &AuxiliaryStructure::triangleSegmentsList(uint t_
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//return triangles array which own the seg 
+//返回线段seg所属的所有三角形 
 inline const auxvector<uint> &AuxiliaryStructure::segmentTrianglesList(const UIPair &seg) const
 {
     UIPair key_seg = uniquePair(seg);
@@ -227,7 +226,7 @@ inline const auxvector<uint> &AuxiliaryStructure::segmentTrianglesList(const UIP
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//add new vertex 
+//把pair(点,点的位置) 插入到map里面
 inline std::pair<uint, bool> AuxiliaryStructure::addVertexInSortedList(const genericPoint *v, uint pos)
 {
     auto ins = v_map.insert({v, pos});
@@ -236,8 +235,7 @@ inline std::pair<uint, bool> AuxiliaryStructure::addVertexInSortedList(const gen
                           ins.second);       // the result of the insert operation /true or false)
 }
 
-//it returns -1 if the pocket is not already present,
-// the i-index of the corresponding triangles in the new_label array otherwise
+//把pair(polygon,pos) 存储到pockets_map里面如果之前还没有这个pair返回-1，否则返回pos
 inline int AuxiliaryStructure::addVisitedPolygonPocket(const std::vector<uint> &polygon, uint pos)
 {
     auto poly_it = pockets_map.insert(std::make_pair(polygon, pos));
@@ -248,7 +246,7 @@ inline int AuxiliaryStructure::addVisitedPolygonPocket(const std::vector<uint> &
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//按uip.first < uip.second，否则交换顺序
 inline UIPair AuxiliaryStructure::uniquePair(const UIPair &uip) const
 {
     if(uip.first < uip.second) return  uip;

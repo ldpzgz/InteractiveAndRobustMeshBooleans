@@ -43,7 +43,8 @@
 #include <cinolib/find_intersections.h>
 
 #include <tbb/tbb.h>
-
+//使用八叉树加速，找出相交三角形pair
+//结果保存到intersections
 inline void find_intersections(const std::vector<cinolib::vec3d> & verts, const std::vector<uint>  & tris,
                               std::vector<cinolib::ipair> & intersections)
 {
@@ -78,7 +79,7 @@ inline void find_intersections(const std::vector<cinolib::vec3d> & verts, const 
 
     remove_duplicates(intersections);
 }
-
+//找出相交三角形pair，结果保存到intersection_list
 inline void detectIntersections(const TriangleSoup &ts, std::vector<std::pair<uint, uint> > &intersection_list)
 {
     std::vector<cinolib::vec3d> verts(ts.numVerts());
@@ -91,7 +92,8 @@ inline void detectIntersections(const TriangleSoup &ts, std::vector<std::pair<ui
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//首先g.intersectionList里面以及保存了相交三角形pair了，
+//遍历这个pair，标记有跟别人相交的三角形，
 inline void classifyIntersections(TriangleSoup &ts, point_arena& arena, AuxiliaryStructure &g)
 {
     auto& v_map = g.get_vmap();
@@ -112,7 +114,7 @@ inline void classifyIntersections(TriangleSoup &ts, point_arena& arena, Auxiliar
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//处理两个三角形以各种姿势相交
 inline void checkTriangleTriangleIntersections(TriangleSoup &ts, point_arena& arena, AuxiliaryStructure &g, uint tA_id, uint tB_id)
 {
     phmap::flat_hash_set<uint> v_tmp; // temporary vtx list for final symbolic edge creation
@@ -130,7 +132,7 @@ inline void checkTriangleTriangleIntersections(TriangleSoup &ts, point_arena& ar
 
     if(sameOrientation(orBA[0], orBA[1]) && sameOrientation(orBA[1], orBA[2]) && (orBA[0] != 0.0)) return;   //no intersection found
 
-    // all edge of tB are coplanar to all edges of tA   (orBA: 0 0 0)
+    // tA上的每个点都与三角形tB共面   (orBA: 0 0 0)
     if(allCoplanarEdges(orBA))
     {
 
@@ -142,8 +144,8 @@ inline void checkTriangleTriangleIntersections(TriangleSoup &ts, point_arena& ar
         checkSingleCoplanarEdgeIntersections(ts, arena, ts.triVertID(tB_id, 2), ts.triVertID(tB_id, 0), tB_id, tA_id, g, li);
     }
 
-    // a single edge of tB is coplanar to tA    (e.g. orBA: 1 0 0)
-    int tmp_edge_id = singleCoplanarEdge(orBA);
+    // 如果ta只有一条边与三角形tb共面    (e.g. orBA: 1 0 0)
+    int tmp_edge_id = singleCoplanarEdge(orBA);//tmp_edge_id（-1，0，1，2）
     if(tmp_edge_id != -1)
     {
         uint e_v0_id = static_cast<uint>(tmp_edge_id);
@@ -151,25 +153,26 @@ inline void checkTriangleTriangleIntersections(TriangleSoup &ts, point_arena& ar
         checkSingleCoplanarEdgeIntersections(ts, arena, ts.triVertID(tB_id, e_v0_id), ts.triVertID(tB_id, e_v1_id), tB_id, tA_id, g, li);
     }
 
-    // a vertex of tB is coplanar to tA, and the opposite edge is on the same side respect to tA  (e.g. orBA: 1 0 1)
-    int tmp_vtx_id = vtxInPlaneAndOppositeEdgeOnSameSide(orBA);
+    // ta的一个顶点与三角形tb共面，这个点对面的边另没有与tb相交的情况  (e.g. orBA: 1 0 1)
+    int tmp_vtx_id = vtxInPlaneAndOppositeEdgeOnSameSide(orBA);//tmp_vtx_id（-1，0，1，2）
     if(tmp_vtx_id != -1)
         checkVtxInTriangleIntersection(ts, ts.triVertID(tB_id, static_cast<uint>(tmp_vtx_id)), tA_id, v_tmp, g, li);
 
-    // a vertex of tB is coplanar to tA, and the opposite edge could intersect tA   (e.g. orBA: -1 0 1)
-    tmp_vtx_id = vtxInPlaneAndOppositeEdgeCrossPlane(orBA);
+    // tb的一个顶点与三角形ta共面, 这个点对面的边与ta相交的情况   (e.g. orBA: -1 0 1)
+    tmp_vtx_id = vtxInPlaneAndOppositeEdgeCrossPlane(orBA);//tmp_vtx_id（-1，0，1，2）
     if(tmp_vtx_id != -1)
     {
+        //处理点与三角形相交的情况
         uint real_v_id = ts.triVertID(tB_id, static_cast<uint>(tmp_vtx_id));
         checkVtxInTriangleIntersection(ts, real_v_id, tA_id, v_tmp, g, li);
-
+        //处理线段与三角形相交的情况
         uint opp_edge_id = ts.edgeOppositeToVert(tB_id, ts.triVertID(tB_id, static_cast<uint>(tmp_vtx_id)));
         checkSingleNoCoplanarEdgeIntersection(ts, arena, opp_edge_id, tA_id, v_tmp, g, li);
     }
 
-    // a vertex of tB is on one side of the plane defined to tA, and the opposite edge (always in tB) is in the other (e.g. orBA: -1 1 1)
+    // tb的一个顶在ta的一头, 这个顶点对面的边在ta的另外一头的情况 (e.g. orBA: -1 1 1)
     uint opp_v0, opp_v1;
-    tmp_vtx_id = vtxOnASideAndOppositeEdgeOnTheOther(orBA, opp_v0, opp_v1);
+    tmp_vtx_id = vtxOnASideAndOppositeEdgeOnTheOther(orBA, opp_v0, opp_v1);//tmp_vtx_id（0，1，2）代表在这个头的那个点
     if(tmp_vtx_id != -1)
     {
         uint id_v = ts.triVertID(tB_id, static_cast<uint>(tmp_vtx_id));
@@ -270,7 +273,7 @@ inline void checkTriangleTriangleIntersections(TriangleSoup &ts, point_arena& ar
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//把边e0,e1的交点插入到多边形soup里面，同时把交点插入到两条边里面。用于后面求解先交
 inline uint addEdgeCrossEdgeInters(TriangleSoup &ts, point_arena& arena, uint e0_id, uint e1_id, AuxiliaryStructure &g)
 {
     uint jolly_id = noCoplanarJollyPointID(ts, ts.edgeVertPtr(e1_id, 0),
@@ -308,7 +311,7 @@ inline uint addEdgeCrossEdgeInters(TriangleSoup &ts, point_arena& arena, uint e0
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+////求边(e0_id,e1_id)与三角形t_id的交点，如果有，插入这个交点，更新辅助结构体里面的信息（边也要插入一个点，三角形也要插入一个点）
 inline uint addEdgeCrossEdgeInters(TriangleSoup &ts, point_arena& arena, uint e0_id, uint e1_id, uint t_id, AuxiliaryStructure &g)
 {
     implicitPoint3D_LPI *tmp_i = &arena.edges.emplace_back(ts.edgeVert(e0_id, 0)->toExplicit3D(),
@@ -342,7 +345,7 @@ inline uint addEdgeCrossEdgeInters(TriangleSoup &ts, point_arena& arena, uint e0
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//求边e_id与三角形t_id的交点，如果有，插入这个交点，更新辅助结构体里面的信息（边也要插入一个点，三角形也要插入一个点）
 inline uint addEdgeCrossTriInters(TriangleSoup &ts, point_arena& arena, uint e_id, uint t_id, AuxiliaryStructure &g)
 {
     implicitPoint3D_LPI *tmp_i = &arena.edges.emplace_back(ts.edgeVert(e_id, 0)->toExplicit3D(),
@@ -375,7 +378,7 @@ inline uint addEdgeCrossTriInters(TriangleSoup &ts, point_arena& arena, uint e_i
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//把线段:(v0,v1),添加到三角形ta，tb中
 inline void addSymbolicSegment(const TriangleSoup &ts, uint v0_id, uint v1_id, uint tA_id, uint tB_id, AuxiliaryStructure &g)
 {
     assert(v0_id != v1_id && "trying to add a 0-lenght symbolic edge");
@@ -408,17 +411,17 @@ inline uint noCoplanarJollyPointID(const TriangleSoup &ts, const double *v0, con
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//一条边e:pair(e_v0,e_v1)是三角形e_t_id上的一条边，这条边与三角形o_t_id共面，计算这条边与三角形o_t_id的相交情况，把交点，交线都添加到辅助结构体里面。
 inline void checkSingleCoplanarEdgeIntersections(TriangleSoup &ts, point_arena& arena, uint e_v0, uint e_v1,
                                           uint e_t_id, uint o_t_id,
                                           AuxiliaryStructure &g, phmap::flat_hash_set<uint> &il) // il -> intersection list
 {
+    //这几个变量表示v0，v1两个点与三角形o_t_id的关系
     bool  v0_in_vtx = false,    v1_in_vtx = false;
-    int  v0_in_seg = -1,        v1_in_seg = -1;
+    int  v0_in_seg = -1,        v1_in_seg = -1;//v0_in_seg 表示顶点v0在三角形o_t_id的哪条边上（seg0，seg1，seg2），值是这条所在边的id
     bool v0_in_tri = false,     v1_in_tri = false;
 
-
-    // e_v0 position
+    // 检查e_v0这个顶点在另外一个三角形中的位置，point_in_triangle_3d这个函数检查一个给定的顶点，是在三角形的顶点，还是在三角形的三条边上，还是在三角形内部，还是在三角形外部这几种情况
     cinolib::PointInSimplex v0_inters = cinolib::point_in_triangle_3d(ts.vertPtr(e_v0), ts.triVertPtr(o_t_id, 0), ts.triVertPtr(o_t_id, 1), ts.triVertPtr(o_t_id, 2));
     if(v0_inters == cinolib::ON_VERT0 || v0_inters == cinolib::ON_VERT1 || v0_inters == cinolib::ON_VERT2)
     {
@@ -431,7 +434,7 @@ inline void checkSingleCoplanarEdgeIntersections(TriangleSoup &ts, point_arena& 
     else if(v0_inters == cinolib::STRICTLY_INSIDE) v0_in_tri = true; // v0 inside tri
 
 
-    // e_v1 position
+    // 检查e_v1这个顶点在另外一个三角形中的位置，同上
     cinolib::PointInSimplex v1_inters = cinolib::point_in_triangle_3d(ts.vertPtr(e_v1), ts.triVertPtr(o_t_id, 0), ts.triVertPtr(o_t_id, 1), ts.triVertPtr(o_t_id, 2));
     if(v1_inters == cinolib::ON_VERT0 || v1_inters == cinolib::ON_VERT1 || v1_inters == cinolib::ON_VERT2)
     {
@@ -442,16 +445,17 @@ inline void checkSingleCoplanarEdgeIntersections(TriangleSoup &ts, point_arena& 
     else if(v1_inters == cinolib::ON_EDGE1) v1_in_seg = static_cast<int>(ts.triEdgeID(o_t_id, 1)); // v1 in seg1
     else if(v1_inters == cinolib::ON_EDGE2) v1_in_seg = static_cast<int>(ts.triEdgeID(o_t_id, 2)); // v1 in seg2
     else if(v1_inters == cinolib::STRICTLY_INSIDE) v1_in_tri = true; // v1 inside tri
-
+    //如果v0，v1都是三角形o_t_id的顶点，返回
     if(v0_in_vtx && v1_in_vtx) return;
-
+    //v0,v1都在三角形的边上（不是三角形的顶点），表示这些边被v0,v1打断了
     if(v0_in_seg != -1 && v1_in_seg != -1)  //edge in triangle composed by the link of two vtx in edge
     {
+        //在辅助结构中，把顶点插入到边里面。
         g.addVertexInEdge(static_cast<uint>(v0_in_seg), e_v0);
         g.addVertexInEdge(static_cast<uint>(v1_in_seg), e_v1);
         il.insert(e_v0);
         il.insert(e_v1);
-
+        //把线段e_v0,e_v1添加到两个三角形中
         addSymbolicSegment(ts, e_v0, e_v1, e_t_id, o_t_id, g);
         return;
     }
@@ -478,17 +482,18 @@ inline void checkSingleCoplanarEdgeIntersections(TriangleSoup &ts, point_arena& 
         }
     }
 
-    // v0 in a segment or vtx and v1 inside triangle
+    // v0 在三角形o_t_id的顶点或者在他的一条边上，v1就在o_t_id三角形内部
     if((v0_in_seg != -1 || v0_in_vtx) && v1_in_tri)
     {
+        //把v1添加到三角形里面
         g.addVertexInTriangle(o_t_id, e_v1);
         il.insert(e_v1);
-
+        //把e_v0,e_v1这条边加入到两个三角形中
         addSymbolicSegment(ts, e_v0, e_v1, e_t_id, o_t_id, g);
         return;
     }
 
-    // v1 in a segment or vtx and v0 inside triangle
+    // 与上面的情况相反
     if((v1_in_seg != -1 || v1_in_vtx) && v0_in_tri)
     {
         g.addVertexInTriangle(o_t_id, e_v0);
@@ -498,7 +503,7 @@ inline void checkSingleCoplanarEdgeIntersections(TriangleSoup &ts, point_arena& 
         return;
     }
 
-    // v0 and v1 both inside the triangle
+    // v0 and v1 都在三角形里面
     if(v0_in_tri && v1_in_tri)
     {
         g.addVertexInTriangle(o_t_id, e_v0);
@@ -509,7 +514,7 @@ inline void checkSingleCoplanarEdgeIntersections(TriangleSoup &ts, point_arena& 
         addSymbolicSegment(ts, e_v0, e_v1, e_t_id, o_t_id, g);
         return;
     }
-
+    //只有一个点在三角形o_t_id内部的情况
     if(v0_in_tri)  // only v0 inside the triangle
     {
         g.addVertexInTriangle(o_t_id, e_v0);
@@ -522,29 +527,31 @@ inline void checkSingleCoplanarEdgeIntersections(TriangleSoup &ts, point_arena& 
     }
 
     // Edges cross checking
-
+    //这边反过来检查了，之前是检查e_v0,e_v1在三角形的哪个位置，现在是检查三角形的三个顶点在e_v0,e_v1这条线段中的哪个位置
     // we check only if seg A cross seg B and not B cross A (we found the intersection once)
     int o_t_e0 = static_cast<int>(ts.triEdgeID(o_t_id, 0));
     int o_t_e1 = static_cast<int>(ts.triEdgeID(o_t_id, 1));
     int o_t_e2 = static_cast<int>(ts.triEdgeID(o_t_id, 2));
-
+    //检查0_t_id三个顶点是否在线段e_v0,e_v1中（或者就是e_v0,e_v1中的一个）
     bool tv0_in_edge = cinolib::point_in_segment_3d(ts.triVertPtr(o_t_id, 0), ts.vertPtr(e_v0), ts.vertPtr(e_v1)) != cinolib::STRICTLY_OUTSIDE;
     bool tv1_in_edge = cinolib::point_in_segment_3d(ts.triVertPtr(o_t_id, 1), ts.vertPtr(e_v0), ts.vertPtr(e_v1)) != cinolib::STRICTLY_OUTSIDE;
     bool tv2_in_edge = cinolib::point_in_segment_3d(ts.triVertPtr(o_t_id, 2), ts.vertPtr(e_v0), ts.vertPtr(e_v1)) != cinolib::STRICTLY_OUTSIDE;
 
     int seg0_cross = -1, seg1_cross = -1, seg2_cross = -1;
     int curr_e_id = ts.edgeID(e_v0, e_v1);
-
+    //这个判断，说了这么多，其实就是判断线段ev0,ev1与三角形o_t_id第一条边相交，且不是交在顶点上
     if(v0_in_seg != o_t_e0 && v1_in_seg != o_t_e0 && !tv0_in_edge && !tv1_in_edge &&
        cinolib::segment_segment_intersect_3d(ts.vertPtr(e_v0), ts.vertPtr(e_v1), ts.triVertPtr(o_t_id, 0), ts.triVertPtr(o_t_id, 1)) == cinolib::INTERSECT &&
        cinolib::point_in_segment_3d(ts.triVertPtr(o_t_id, 0), ts.vertPtr(e_v0), ts.vertPtr(e_v1)) == cinolib::STRICTLY_OUTSIDE &&
        cinolib::point_in_segment_3d(ts.triVertPtr(o_t_id, 1), ts.vertPtr(e_v0), ts.vertPtr(e_v1)) == cinolib::STRICTLY_OUTSIDE) // edge e cross seg 0
     {
+        //添加边v0,v1与o_t_id这个三角形的第一条边的交点。
         seg0_cross = static_cast<int>(addEdgeCrossEdgeInters(ts, arena, static_cast<uint>(o_t_e0), static_cast<uint>(curr_e_id), g));
         il.insert(static_cast<uint>(seg0_cross));
 
         if(v0_in_vtx || v0_in_seg != -1 || v0_in_tri)
         {
+            //把线段添加到两个三角形中
             addSymbolicSegment(ts, e_v0, static_cast<uint>(seg0_cross), e_t_id, o_t_id, g);
             return;
         }
@@ -560,7 +567,7 @@ inline void checkSingleCoplanarEdgeIntersections(TriangleSoup &ts, point_arena& 
             return;
         }
     }
-
+    //同上
     if(v0_in_seg != o_t_e1 && v1_in_seg != o_t_e1 && !tv1_in_edge && !tv2_in_edge &&
        cinolib::segment_segment_intersect_3d(ts.vertPtr(e_v0), ts.vertPtr(e_v1), ts.triVertPtr(o_t_id, 1), ts.triVertPtr(o_t_id, 2)) == cinolib::INTERSECT &&
        cinolib::point_in_segment_3d(ts.triVertPtr(o_t_id, 1), ts.vertPtr(e_v0), ts.vertPtr(e_v1)) == cinolib::STRICTLY_OUTSIDE &&
@@ -586,7 +593,7 @@ inline void checkSingleCoplanarEdgeIntersections(TriangleSoup &ts, point_arena& 
             return;
         }
     }
-
+    //同上
     if(v0_in_seg != o_t_e2 && v1_in_seg != o_t_e2 && !tv2_in_edge && !tv0_in_edge &&
        cinolib::segment_segment_intersect_3d(ts.vertPtr(e_v0), ts.vertPtr(e_v1), ts.triVertPtr(o_t_id, 2), ts.triVertPtr(o_t_id, 0)) == cinolib::INTERSECT &&
        cinolib::point_in_segment_3d(ts.triVertPtr(o_t_id, 2), ts.vertPtr(e_v0), ts.vertPtr(e_v1)) == cinolib::STRICTLY_OUTSIDE &&
@@ -643,7 +650,10 @@ inline void checkSingleCoplanarEdgeIntersections(TriangleSoup &ts, point_arena& 
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//计算任意一条边e_id与三角形t_id的相交情况，这条边与三角形不共面，这样的先交有三种情况
+//1 边与三角形的顶点先交，什么都不做
+//2 边与三角形的三条边中的一条先交，求出交点，跟新
+//3 边与三角形的内部先交，求出交点，更新
 inline void checkSingleNoCoplanarEdgeIntersection(TriangleSoup &ts, point_arena& arena, uint e_id, uint t_id,
                                            phmap::flat_hash_set<uint> &v_tmp, AuxiliaryStructure &g, phmap::flat_hash_set<uint> &li) // li -> intersection list
 {
@@ -652,12 +662,12 @@ inline void checkSingleNoCoplanarEdgeIntersection(TriangleSoup &ts, point_arena&
                                                                                  ts.triVertPtr(t_id, 0), ts.triVertPtr(t_id, 1), ts.triVertPtr(t_id, 2));
 
     if(inters == cinolib::DO_NOT_INTERSECT || inters == cinolib::SIMPLICIAL_COMPLEX) return; // no intersection found
-
+    //如果三角形中的任意一点，是边e_id的其中一个顶点，什么都不用做
     if(cinolib::point_in_segment_3d(ts.triVertPtr(t_id, 0), ts.edgeVertPtr(e_id, 0), ts.edgeVertPtr(e_id, 1)) == cinolib::STRICTLY_INSIDE ||
        cinolib::point_in_segment_3d(ts.triVertPtr(t_id, 1), ts.edgeVertPtr(e_id, 0), ts.edgeVertPtr(e_id, 1)) == cinolib::STRICTLY_INSIDE ||
        cinolib::point_in_segment_3d(ts.triVertPtr(t_id, 2), ts.edgeVertPtr(e_id, 0), ts.edgeVertPtr(e_id, 1)) == cinolib::STRICTLY_INSIDE)
         return;
-
+    //如果边e_id与三角形的某一条边先交，算出交点，跟新辅助求交结构体。
     // the edge intersect the tri in seg 0
     if(cinolib::segment_segment_intersect_3d(ts.edgeVertPtr(e_id, 0), ts.edgeVertPtr(e_id, 1),
                                              ts.triVertPtr(t_id, 0), ts.triVertPtr(t_id, 1)) == cinolib::INTERSECT)
@@ -690,7 +700,7 @@ inline void checkSingleNoCoplanarEdgeIntersection(TriangleSoup &ts, point_arena&
         v_tmp.insert(int_point);
         return ;
     }
-
+    //边与三角形内部先交，求出交点
     // the edge intersect the inner triangle
     uint int_point = addEdgeCrossTriInters(ts, arena, e_id, t_id, g);
     li.insert(int_point);
@@ -698,7 +708,10 @@ inline void checkSingleNoCoplanarEdgeIntersection(TriangleSoup &ts, point_arena&
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//检查一个点v_id与三角形t_id的关系：
+//1 点在三角形外，直接返回
+//2 点在三角形的第一条，或者第二条，或者第三条边上，在先交的辅助结构体里面把点加入到边，把边打断
+//3 点在三角形顶点上，
 inline void checkVtxInTriangleIntersection(TriangleSoup &ts, uint v_id, uint t_id, phmap::flat_hash_set<uint> &v_tmp, AuxiliaryStructure &g, phmap::flat_hash_set<uint> &li) // li -> intersection list
 {
     cinolib::PointInSimplex inters = cinolib::point_in_triangle_3d(ts.vertPtr(v_id), ts.triVertPtr(t_id, 0), ts.triVertPtr(t_id, 1), ts.triVertPtr(t_id, 2));
@@ -752,7 +765,8 @@ inline void checkVtxInTriangleIntersection(TriangleSoup &ts, uint v_id, uint t_i
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//遍历soup里面的每一个三角形，找到每一个三角形共面的其他三角形，
+//遍历这些共面的三角形，判断插入到这些共面三角形里面的点，线段，是否在上面的这个三角形里面，如果在，更新辅助结构体里面的信息。
 inline void propagateCoplanarTrianglesIntersections(TriangleSoup &ts, AuxiliaryStructure &g)
 {
     for(uint t_id = 0; t_id < ts.numTris(); t_id++)
@@ -798,7 +812,7 @@ inline void propagateCoplanarTrianglesIntersections(TriangleSoup &ts, AuxiliaryS
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//数组里面小于0的改为-1，大于0的改为1
 inline void normalizeOrientations(double o[])
 {
     if(o[0] < 0) o[0] = -1;
@@ -893,7 +907,7 @@ inline int vtxOnASideAndOppositeEdgeOnTheOther(const double o[], uint &opp_v0, u
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//判断p_id这个点是否在三角形t_id里面
 inline bool genericPointInsideTriangle(const TriangleSoup &ts, uint p_id, uint t_id, const bool &strict)
 {
     const genericPoint *p = ts.vert(p_id);

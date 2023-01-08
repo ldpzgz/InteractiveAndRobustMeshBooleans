@@ -124,7 +124,8 @@ inline void mergeDuplicatedVertices(const std::vector<double> &in_coords, const 
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//移除退化的和重复的三角形，两个三角形如果全部顶点都一样就是重复的三角形
+//tris与labels会resize到去除退化和重复三角形后的大小。
 inline void removeDegenerateAndDuplicatedTriangles(const std::vector<genericPoint*> &verts, const std::vector<std::bitset<NBIT> > &in_labels,
                                                    std::vector<uint> &tris, std::vector< std::bitset<NBIT> > &labels)
 {
@@ -185,7 +186,8 @@ inline void freePointsMemory(std::vector<genericPoint *> &points)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//把vertices（隐式或显示表示）转换为double，且还原到原来的大小（之前放大了multiplier倍）
+//输出到coords
 inline void computeApproximateCoordinates(const std::vector<genericPoint *> &vertices, std::vector<double> &coords)
 {
     coords.reserve(3 * (vertices.size() -5));
@@ -212,7 +214,8 @@ inline void computeApproximateCoordinates(const std::vector<genericPoint *> &ver
     }
 }
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//把vertices（隐式或显示表示）转换为cinolib::vec3d，且还原到原来的大小（之前放大了multiplier倍）
+//输出到out_vertices
 inline void computeApproximateCoordinates(const std::vector<genericPoint *> &vertices, std::vector<cinolib::vec3d> &out_vertices)
 {
     out_vertices.reserve((vertices.size() -5));

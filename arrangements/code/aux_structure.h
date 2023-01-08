@@ -131,7 +131,7 @@ struct aux_point_map {
     }
 };
 /*
-* a help struct for resove intersect triangles
+* 一个求解相交三角形的辅助结构
 */
 class AuxiliaryStructure
 {
@@ -186,14 +186,14 @@ class AuxiliaryStructure
         int     num_intersections;
         uint    num_tpi;
 
-        std::vector< std::pair<uint, uint> > intersection_list;//a pair<uint,uint> indicate a intersect triangles
-        std::vector< auxvector<uint> > coplanar_tris;
-        std::vector< auxvector<uint> > tri2pts;//new vertexes can be inserted to a triangle
-        std::vector< auxvector<uint> > edge2pts;//a edge can own more than two verterx,new vertexes can be inserted to a edge because of intersection
-        std::vector< auxvector<UIPair> > tri2segs;//new segment can be inserted to a triangle
-        phmap::flat_hash_map< UIPair, auxvector<uint>  > seg2tris;//a segment can be owned by many triangles
-        std::vector<bool> tri_has_intersections;// a triangle a flag which indicate wether the triangle has intersected with other triangles.
-        aux_point_map<uint> v_map;//vertex to it's index
+        std::vector< std::pair<uint, uint> > intersection_list;//a pair<uint,uint> 一对一对的相交三角形
+        std::vector< auxvector<uint> > coplanar_tris;//一个map，key是三角形id，value是一个数组，表示跟这个三角形共面的三角形
+        std::vector< auxvector<uint> > tri2pts;//一个map，key是三角形id-value是插入到三角形里面的点数组
+        std::vector< auxvector<uint> > edge2pts;//一个map，key是边的id，value是插入到这条边里面的点数组
+        std::vector< auxvector<UIPair> > tri2segs;//一个map，key是三角形的id，value是插入到这个三角形里面的边数组
+        phmap::flat_hash_map< UIPair, auxvector<uint>  > seg2tris;//一个map，key是线段，value是三角形id的数组，表示这条线段是这几个三角形的交线。
+        std::vector<bool> tri_has_intersections;// 每个三角形一个标志，标识这个三角形是否有跟其他三角形相交
+        aux_point_map<uint> v_map;//点（genericPoint指针）-位置 map
         phmap::flat_hash_set< std::vector<uint> > visited_pockets;
         phmap::flat_hash_map< std::vector<uint>, uint> pockets_map;
 

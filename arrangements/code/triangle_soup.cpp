@@ -328,7 +328,7 @@ inline Plane TriangleSoup::triPlane(uint t_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//return true if the v_id is a vertex of the triangle t_id
+//return true 如果顶点v_id是三角形t_id的一个顶点
 inline bool TriangleSoup::triContainsVert(uint t_id, uint v_id) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -341,7 +341,7 @@ inline bool TriangleSoup::triContainsVert(uint t_id, uint v_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//return   true if the edge(a pair<ev0_id,ev1_id>) is belong to triangle t_id
+//return true 如果evi_id是三角形t_id的一条边
 inline bool TriangleSoup::triContainsEdge(const uint t_id, uint ev0_id, uint ev1_id) const
 {
     return (triContainsVert(t_id, ev0_id) && triContainsVert(t_id, ev1_id));
