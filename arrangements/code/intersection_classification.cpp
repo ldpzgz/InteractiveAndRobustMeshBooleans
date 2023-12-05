@@ -92,7 +92,7 @@ inline void detectIntersections(const TriangleSoup &ts, std::vector<std::pair<ui
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//首先g.intersectionList里面以及保存了相交三角形pair了，
+//首先g.intersectionList里面已经保存了相交三角形pair了，
 //遍历这个pair，标记有跟别人相交的三角形，
 inline void classifyIntersections(TriangleSoup &ts, point_arena& arena, AuxiliaryStructure &g)
 {
@@ -345,7 +345,8 @@ inline uint addEdgeCrossEdgeInters(TriangleSoup &ts, point_arena& arena, uint e0
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//求边e_id与三角形t_id的交点，如果有，插入这个交点，更新辅助结构体里面的信息（边也要插入一个点，三角形也要插入一个点）
+//求边e_id与三角形t_id的交点，如果有，插入这个交点，
+//更新辅助结构体里面的信息（边被打断也要插入一个点，三角形也要插入一个点）
 inline uint addEdgeCrossTriInters(TriangleSoup &ts, point_arena& arena, uint e_id, uint t_id, AuxiliaryStructure &g)
 {
     implicitPoint3D_LPI *tmp_i = &arena.edges.emplace_back(ts.edgeVert(e_id, 0)->toExplicit3D(),

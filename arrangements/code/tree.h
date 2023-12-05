@@ -42,7 +42,8 @@
 #include <vector>
 
 typedef unsigned int uint;
-
+//一个node代表一个三角形，
+//node里面是3个顶点的id，以及3个子节点（一个三角形最多被划分为3个子三角形）的id
 struct Node
 {
     Node(){}
@@ -57,8 +58,9 @@ struct Node
     uint v0, v1, v2;
     int children[3];
 };
-
-//树里面has一个Node数组，a node装的是一个三角形的三个顶点的索引，还有三个子节点(在node数组里面的index)
+//一个树代表一个三角形，这个三角形可能被三角化为多个三角形，用树型结构来组织管理
+//树里面有一个Node数组，a node装的是一个三角形的三个顶点的索引，还有三个子节点(在node数组里面的index)
+//一个三角形只有3个子节点，说明一个三角形最多只被划分为3个三角形
 class Tree
 {
     public:
@@ -69,7 +71,7 @@ class Tree
         {
             nodes.reserve(size);
         }
-        //用三个顶点的index 构造一个节点，添加到节点数组的末尾
+        //用三个顶点的index 构造一个节点，添加到节点数组的末尾，返回节点id
         inline uint addNode(const uint &v0, const uint &v1, const uint &v2)
         {
             nodes.emplace_back(v0, v1, v2);
@@ -81,7 +83,7 @@ class Tree
             assert(node_id < nodes.size() && "out fo range node id");
             return nodes[node_id];
         }
-        //吧co，c1两个节点作为node_id的子节点（node_id必须还没有子节点）
+        //为node_id节点添加两个子节点，(node_id必须还没有子节点）
         inline void addChildren(const uint &node_id, const uint &c0, const uint &c1)
         {
             assert(node_id < nodes.size() && "out fo range node id");
@@ -90,7 +92,7 @@ class Tree
             nodes[node_id].children[0] = static_cast<int>(c0);
             nodes[node_id].children[1] = static_cast<int>(c1);
         }
-        //吧co，c1,c2两个节点作为node_id的子节点（node_id必须还没有子节点）
+        //为node_id节点添加三个子节点，(node_id必须还没有子节点）
         inline void addChildren(const uint &node_id, const uint &c0, const uint &c1, const uint &c2)
         {
             assert(node_id < nodes.size() && "out fo range node id");

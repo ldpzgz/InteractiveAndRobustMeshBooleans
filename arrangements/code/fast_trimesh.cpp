@@ -41,7 +41,7 @@
 #include "fast_trimesh.h"
 
 #include "utils.h"
-
+//构造只有一个三角形的mesh
 inline FastTrimesh::FastTrimesh(const genericPoint *tv0, const genericPoint *tv1, const genericPoint *tv2, const uint *tv_id, const Plane &ref_p)
 {
     addVert(tv0, tv_id[0]);
@@ -198,7 +198,7 @@ inline const genericPoint* FastTrimesh::vert(uint v_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//返回new_v_id的重复顶点的id，一个顶点只能有一个重复顶点
+//返回new_v_id的原始顶点的id
 inline uint FastTrimesh::vertOrigID(uint new_v_id) const
 {
     assert(new_v_id < vertices.size() && "vtx id out of range");
@@ -601,7 +601,7 @@ inline void FastTrimesh::setTriInfo(uint t_id, uint val)
 /************************************************************************************************
  *          MESH MANIPULATION
  * **********************************************************************************************/
-//添加顶点，这个顶点是某个顶点orig_v_id的重复
+//添加顶点，返回顶点id，这个顶点对应一个原顶点（在最原始的soup里面）
 inline uint FastTrimesh::addVert(const genericPoint *v, uint orig_v_id)
 {
     uint v_id = static_cast<uint>(vertices.size());
@@ -614,7 +614,7 @@ inline uint FastTrimesh::addVert(const genericPoint *v, uint orig_v_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//添加顶点，但是这个顶点的index设置为0了
+//添加新顶点，各种相交产生的顶点
 inline void FastTrimesh::addVert(const genericPoint *v)
 {
     vertices.emplace_back(v, 0);
@@ -657,9 +657,9 @@ inline void FastTrimesh::removeEdge(uint e_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//先找到三角形的三条边，删除每条边e2t里面的t_id，
-//遍历这三条边，每条边取出两个顶点，如果这个边已经没有三角形了，
-//在v2e里面删除这条边，
+//删除t_id这个三角形，并把相关信息清理干净
+//先找到三角形的三条边，删除每条边e2t里面的t_id记录（因为t_id这个三角形要被删除了），
+//遍历这三条边，每条边取出两个顶点，如果这个边已经没有三角形了，则在v2e里面删除这条边，
 //移除每一条边（边占用的空间）。
 //最后移除这个三角形（三角形占用的空间）
 inline void FastTrimesh::removeTri(uint t_id)
@@ -711,7 +711,8 @@ inline void FastTrimesh::removeTris(const fmvector<uint> &t_ids)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//把一条边打断为两条边，把e_id这条边，用v_id与e_id上两个顶点组成的两条边替换
+//把一条边打断为两条边，点v_id在边e_id上，随后三角化（新增）与这条边相连的三角形，
+//并且删除原来与这条边相连的所有三角形（被新三角形替换了）
 inline void FastTrimesh::splitEdge(const uint  &e_id, uint v_id)
 {
     assert(e_id < edges.size() && "edge id out of range");
@@ -732,7 +733,9 @@ inline void FastTrimesh::splitEdge(const uint  &e_id, uint v_id)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//把一条边打断为两条边，把e_id这条边，用v_id与e_id上两个顶点组成的两条边替换
+//把e_id这条边打断为两条边，与这条边相连的三角形，都会被划分为两个新的三角形。
+//把e_id这条边，用v_id与e_id上两个顶点组成的两条边替换
+//移除原来的与这条边相连的三角形
 inline void FastTrimesh::splitEdge(const uint  &e_id, uint v_id, Tree &tree)
 {
     assert(e_id < edges.size() && "edge id out of range");

@@ -159,7 +159,7 @@ inline uint TriangleSoup::numOrigTriangles() const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//根据顶点id，拿到顶点
 inline const genericPoint* TriangleSoup::vert(uint v_id) const
 {
     assert(v_id < numVerts() && "vtx id out of range");
@@ -209,7 +209,7 @@ inline uint TriangleSoup::addImplVert(genericPoint* gp)
 /*******************************************************************************************************
  *      EDGES
  * ****************************************************************************************************/
-//return edge index in edges
+//返回边（v0,v1)在边数组edges的下标
 inline int TriangleSoup::edgeID(uint v0_id, uint v1_id) const
 {
     auto it = edge_map.find(uniqueEdge(v0_id, v1_id));
@@ -299,8 +299,8 @@ inline const genericPoint* TriangleSoup::triVert(uint t_id, uint off) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//返回一个三角形t_id的第（0，1，2）个顶点的double pointer
-//if vertex is implicit , translate it to explicit point
+//返回一个三角形t_id的第（0，1，2）个顶点的explicit值的pointer
+//如果点是implicit的会把它转变为显示的都变了，然后返回指针
 inline const double* TriangleSoup::triVertPtr(uint t_id, uint off) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -308,7 +308,7 @@ inline const double* TriangleSoup::triVertPtr(uint t_id, uint off) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//return a edge(off,off+1) of a triangle t_id
+//返回triangle t_id 的一条边：edge(off,off+1)
 inline uint TriangleSoup::triEdgeID(uint t_id, uint off) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -320,7 +320,7 @@ inline uint TriangleSoup::triEdgeID(uint t_id, uint off) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//return the most closed plane(xy or yz or zx) of the triangle t_id 
+//返回三角形t_id的平面 plane(xy or yz or zx)
 inline Plane TriangleSoup::triPlane(uint t_id) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -328,7 +328,7 @@ inline Plane TriangleSoup::triPlane(uint t_id) const
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//return true 如果顶点v_id是三角形t_id的一个顶点
+//判断v_id是不是三角形t_id的顶点
 inline bool TriangleSoup::triContainsVert(uint t_id, uint v_id) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -348,7 +348,7 @@ inline bool TriangleSoup::triContainsEdge(const uint t_id, uint ev0_id, uint ev1
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//get the lable of a triangle t_id, a lable indicate the triangle t_id belong to which mesh
+//返回三角形t_id的label，这个label表面三角形属于哪些mesh
 inline std::bitset<NBIT> TriangleSoup::triLabel(uint t_id) const
 {
     assert(t_id < numTris() && "t_id out of range");
@@ -390,7 +390,7 @@ inline void TriangleSoup::initJollyPoints(point_arena& arena, double multiplier)
 }
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//边 is a pair<v0_id,v1_id>  , and v0_id<v1_id
+//边是由顶点id组成的pair，且第一个顶点id值小于第二个顶点id值
 inline Edge TriangleSoup::uniqueEdge(uint v0_id, uint v1_id) const
 {
     if(v0_id < v1_id) return {v0_id, v1_id};

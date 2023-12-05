@@ -59,9 +59,9 @@ using EdgeMap = phmap::flat_hash_map<K, V>;
 class TriangleSoup
 {
     public:
-        //arena:  contains the original points array,no overlapped
-        //in_vertices: vertice pointer array, the pointer point to arena.init
-        //in_tris: triangles array, no overlapped ,a triangle consist of three verter indexes
+        //arena:  这个里面存储了最原始的顶点数组，且里面的顶点已经去除了重复了
+        //in_vertices: 顶点的指针的数组，指针指向arena.init 里面的内容
+        //in_tris: 三角形数组, no overlapped ,a triangle consist of three verter indexes
         //labels: lable array, a lable indicate that a triangle belong to which meshes
         //multiplier: is a scale value, all vertexes in arena will be sacled by this value.
         inline TriangleSoup(point_arena& arena, std::vector<genericPoint*> &in_vertices, std::vector<uint> &in_tris, std::vector< std::bitset<NBIT> > &labels, double multiplier, bool parallel)

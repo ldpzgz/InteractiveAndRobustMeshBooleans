@@ -47,13 +47,16 @@
 #include "utils.h"
 
 #include <tbb/tbb.h>
-
+//三角化一个三角形
+//subm 是要被三角化的那个三角形
+//new_tris 存储新形成的三角形的顶点（一个三角形3个顶点）
+//new_labels 是这个被三角化的t_id的三角形的label，新生成的三角形全部继承它，每个新三角形都要记一个lable
 inline void triangulateSingleTriangle(TriangleSoup &ts, point_arena& arena, FastTrimesh &subm, uint t_id, AuxiliaryStructure &g, std::vector<uint> &new_tris, std::vector< std::bitset<NBIT> > &new_labels, tbb::spin_mutex& mutex)
 {
     /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
      *                                  POINTS AND SEGMENTS RECOVERY
      * :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
-
+    //获取插入到三角形t_id内部的所有顶点
     const auto& t_points = g.trianglePointsList(t_id);
 
     int e0_id = ts.edgeID(subm.vertOrigID(0), subm.vertOrigID(1));      assert(e0_id != -1);
@@ -61,19 +64,20 @@ inline void triangulateSingleTriangle(TriangleSoup &ts, point_arena& arena, Fast
     int e2_id = ts.edgeID(subm.vertOrigID(2), subm.vertOrigID(0));      assert(e2_id != -1);
 
     auxvector<uint> e0_points, e1_points, e2_points;
+    //给插入到三条边上的顶点排好序，输出到e0_points,e1_points,e2_points
     sortedVertexListAlongSegment(ts, g.edgePointsList(static_cast<uint>(e0_id)), subm.vertOrigID(0), subm.vertOrigID(1), e0_points);
     sortedVertexListAlongSegment(ts, g.edgePointsList(static_cast<uint>(e1_id)), subm.vertOrigID(1), subm.vertOrigID(2), e1_points);
     sortedVertexListAlongSegment(ts, g.edgePointsList(static_cast<uint>(e2_id)), subm.vertOrigID(2), subm.vertOrigID(0), e2_points);
-
+    //拿到插入到这个三角形里面的所有线段
     auxvector<UIPair> t_segments(g.triangleSegmentsList(t_id).begin(), g.triangleSegmentsList(t_id).end());
-
+    //预估这个三角形的所有顶点个数
     uint estimated_vert_num = static_cast<uint>(t_points.size() + e0_points.size() + e1_points.size() + e2_points.size());
     subm.preAllocateSpace(estimated_vert_num);
 
     /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
      *                                  TRIANGLE SPLIT
      * :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
-
+    //根据插入到三角形内部的点，划分三角形
     if(t_points.size() < 50)
         splitSingleTriangle(ts, subm, t_points);
     else
@@ -83,7 +87,8 @@ inline void triangulateSingleTriangle(TriangleSoup &ts, point_arena& arena, Fast
     /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
      *                                  EDGE SPLIT
      * :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
-
+    //如果有顶点插入到三角形的边上，需要进行三角化，针对每一条边进行一次，
+    //这里会处理与这条边相连的所有三角形
     splitSingleEdge(ts, subm, 0, 1, e0_points);
     splitSingleEdge(ts, subm, 1, 2, e1_points);
     splitSingleEdge(ts, subm, 2, 0, e2_points);
@@ -91,7 +96,7 @@ inline void triangulateSingleTriangle(TriangleSoup &ts, point_arena& arena, Fast
     /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
      *                           CONSTRAINT SEGMENT INSERTION
      * :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
-
+    //把线段插入到了三角形里面，这些线段会跟前面三角化出来的边相交，需要做一些调整，split edge等操作
     addConstraintSegmentsInSingleTriangle(ts, arena, subm, g, t_segments, mutex);
 
     /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -164,7 +169,7 @@ inline void triangulation(TriangleSoup &ts, point_arena& arena, AuxiliaryStructu
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//根据插入到三角形内部的点，三角化某个三角形
 inline void splitSingleTriangle(const TriangleSoup &ts, FastTrimesh &subm, const auxvector<uint> &points)
 {
     if(points.empty()) return;
@@ -186,7 +191,7 @@ inline void splitSingleTriangle(const TriangleSoup &ts, FastTrimesh &subm, const
         uint e0_id = static_cast<uint>(subm.triEdgeID(static_cast<uint>(cont_t_id), 0));
         uint e1_id = static_cast<uint>(subm.triEdgeID(static_cast<uint>(cont_t_id), 1));
         uint e2_id = static_cast<uint>(subm.triEdgeID(static_cast<uint>(cont_t_id), 2));
-
+        //如果这个点位于三角形的边上，也那就调用splitEdge，但是这个点不可能位于被三角化的那个三角形（subm）的边上？
         if(fastPointOnLine(subm, e0_id, v_pos))
             subm.splitEdge(e0_id, v_pos);
 
@@ -201,7 +206,7 @@ inline void splitSingleTriangle(const TriangleSoup &ts, FastTrimesh &subm, const
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//根据插入到三角形内部的点（超过50个点），加速三角化某个三角形
 inline void splitSingleTriangleWithTree(const TriangleSoup &ts, FastTrimesh &subm, const auxvector<uint> &points)
 {
     if(points.empty()) return;
@@ -243,7 +248,7 @@ inline void splitSingleTriangleWithTree(const TriangleSoup &ts, FastTrimesh &sub
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//在被三角化的三角形subm里面，找到包含了p_id这个点的三角形
 inline int findContainingTriangle(const FastTrimesh &subm, uint p_id)
 {
     for(uint t_id = 0; t_id < subm.numTris(); t_id++)
@@ -332,7 +337,7 @@ inline void splitSingleEdge(const TriangleSoup &ts, FastTrimesh &subm, uint v0_i
 
     int e_id = subm.edgeID(v0_id, v1_id);
     assert(e_id >= 0);
-
+    //除了v0,v1这两个端点为，插入到这条边的顶点，全部复制一份，points数组存储复制后的顶点id
     // new_vertices in mesh
     for(uint p_pos = 1; p_pos < points.size()-1; p_pos++)
     {
@@ -340,11 +345,12 @@ inline void splitSingleEdge(const TriangleSoup &ts, FastTrimesh &subm, uint v0_i
         uint v_pos = subm.addVert(ts.vert(p_id), p_id);
         points[p_pos] = v_pos;
     }
-
+    //两个端点不用复制
     points[0] = v0_id;
     points[points.size() - 1] = v1_id;
 
-    // make new_triangles
+    //在这条边上新插入的顶点，都需要插入一个三角形，
+    //与这条边相连的三角形都需要做这个操作
     for(auto i = points.begin(), j = i+1; j < points.end(); ++i, ++j)
     {
         for(uint t_id : subm.adjE2T(static_cast<uint>(e_id)))
@@ -357,14 +363,14 @@ inline void splitSingleEdge(const TriangleSoup &ts, FastTrimesh &subm, uint v0_i
                 subm.addTri(*i, *j, opp);
         }
     }
-
+    //插入了三角形后，原来这条边可以移除了
     // remove the original edge and the tris attached to it
     subm.removeEdge(static_cast<uint>(e_id));
 }
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//根据插入到三角形里面的所有线段，三角化这个三角形,每条线段三角化一次
 inline void addConstraintSegmentsInSingleTriangle(TriangleSoup &ts, point_arena& arena, FastTrimesh &subm, AuxiliaryStructure &g, auxvector<UIPair> &segment_list, tbb::spin_mutex& mutex)
 {
     int orientation = subm.triOrientation(0);
@@ -385,7 +391,7 @@ inline void addConstraintSegmentsInSingleTriangle(TriangleSoup &ts, point_arena&
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//根据插入到三角形里面的所有线段（v0_id,v1_id)，三角化这个三角形
 inline void addConstraintSegment(TriangleSoup &ts, point_arena& arena, FastTrimesh &subm, uint v0_id, uint v1_id, const int orientation,
                           AuxiliaryStructure &g, auxvector<UIPair> &segment_list, phmap::flat_hash_map< UIPair, UIPair > &sub_segs_map, tbb::spin_mutex& mutex)
 {
@@ -403,7 +409,7 @@ inline void addConstraintSegment(TriangleSoup &ts, point_arena& arena, FastTrime
 
     auxvector<uint> intersected_edges;
     auxvector<uint> intersected_tris;
-
+    //查找出，三角形内部，与边(v_start, v_stop) 相交的三角形或者边
     findIntersectingElements(ts, arena, subm, v_start, v_stop, intersected_edges, intersected_tris, g, segment_list, sub_segs_map, mutex);
 
     if(intersected_edges.size() == 0) return;
@@ -439,21 +445,21 @@ inline void findIntersectingElements(TriangleSoup &ts, point_arena& arena, FastT
     uint orig_vstart = subm.vertOrigID(v_start);
     uint orig_vstop  = subm.vertOrigID(v_stop);
 
-    // find the edge in link(seed) that intersect {A,B}
+    // 遍历于v_start顶点的one ring triangles,find the edge in link(seed) that intersect {A,B}
     for(uint t_id : subm.adjV2T(v_start))
     {
         uint e_id = subm.edgeOppToVert(t_id, v_start);
         uint ev0_id = subm.edgeVertID(e_id, 0);
         uint ev1_id = subm.edgeVertID(e_id, 1);
         assert((ev0_id != v_stop && ev1_id != v_stop) && "v0_id or v1_id == v_stop");
-
+        //如果两条边相交于某个点
         if(segmentsIntersectInside(subm, v_start, v_stop, ev0_id, ev1_id))
         {
             intersected_edges.push_back(e_id);
             intersected_tris.push_back(t_id);
             break;
         }
-
+        //如果要插入的边被打断了，分割成两条边，分别处理
         else if(pointInsideSegment(subm, v_start, v_stop, ev0_id))
         {
             // the original edge (v_start, v_stop) is split in (v_start-v0) - (v0-v_stop) and put in the segment_list to check later
@@ -470,7 +476,7 @@ inline void findIntersectingElements(TriangleSoup &ts, point_arena& arena, FastT
 
             return;
         }
-
+        //如果要插入的边被打断了，分割成两条边，分别处理
         else if(pointInsideSegment(subm, v_start, v_stop, ev1_id))
         {
             // the original edge (v_start, v_stop) is split in (v_start-v1) - (v1-v_stop) and put in the segment_list to check later
@@ -1122,7 +1128,9 @@ inline int customOrient2D(const genericPoint *p0, const genericPoint *p1, const 
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+//给插入到边（v0,v1)里面的顶点排个序
+//point_list 是插入到这条边里面的所有顶点，这里的顶点只是顶点id(就是顶点数组的下标)
+//out_point_list 输出排好序的顶点
 inline void sortedVertexListAlongSegment(const TriangleSoup &ts, const auxvector<uint> &point_list,
                                   uint v0_id, uint v1_id, auxvector<uint> &out_point_list)
 {

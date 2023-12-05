@@ -83,7 +83,7 @@ struct iTri
     uint info = 0;
 };
 /*
-*  可以快速访问的三角形网格类
+*  用来管理某个三角形的三角化过程
 */
 class FastTrimesh
 {
@@ -209,14 +209,14 @@ class FastTrimesh
         inline void flipTri(uint t_id);
 
     private:
-        std::vector<iVtx>    vertices;//里面的成员是(顶点指针，以及顶点的info(uint 重复顶点的index))
+        std::vector<iVtx>    vertices;//vec pair(顶点指针，原顶点的index（如果没有原顶点则为0）)
         std::vector<iEdge>   edges;//里面的成员是两个顶点id，以及一个是否被访问过的标志
         std::vector<iTri>    triangles;//三个顶点的index，以及一个info（uint,nodeid in tree）
 
         std::vector< fmvector<uint> >    v2e;//是一个map，key是顶点的id，value是共用这个顶点的边的ids,
         std::vector< fmvector<uint> >    e2t;//是一个vector map，key是边的id，value是共用这条边的三角形的ids,共用一条边的三角形可能不止2个,与edges数组一样的大小
 
-        phmap::flat_hash_map <uint, uint> rev_vtx_map;//记录重复顶点，一个顶点只能记录一个重复顶点
+        phmap::flat_hash_map <uint, uint> rev_vtx_map;//map pair(原顶点id，现在的顶点id)
 
         Plane triangle_plane;
 
