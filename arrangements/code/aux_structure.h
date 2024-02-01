@@ -131,7 +131,7 @@ struct aux_point_map {
     }
 };
 /*
-* 一个求解相交三角形的辅助结构
+* 一个求解相交三角形的辅助结构,管理所有三角形的相交信息
 */
 class AuxiliaryStructure
 {

@@ -391,7 +391,7 @@ inline void addConstraintSegmentsInSingleTriangle(TriangleSoup &ts, point_arena&
 }
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-//根据插入到三角形里面的所有线段（v0_id,v1_id)，三角化这个三角形
+//往三角形中插入一个线段（v0_id,v1_id)，三角化这个三角形
 inline void addConstraintSegment(TriangleSoup &ts, point_arena& arena, FastTrimesh &subm, uint v0_id, uint v1_id, const int orientation,
                           AuxiliaryStructure &g, auxvector<UIPair> &segment_list, phmap::flat_hash_map< UIPair, UIPair > &sub_segs_map, tbb::spin_mutex& mutex)
 {
@@ -971,9 +971,20 @@ inline bool segmentsIntersectInside(const FastTrimesh &subm, uint e00_id, uint e
                                               *subm.vert(e10_id), *subm.vert(e11_id));
 }
 
+inline bool segmentsIntersectInside_cgal(const FastTrimesh &subm, uint e00_id, uint e01_id, uint e10_id, uint e11_id)
+{
+    return genericPoint::innerSegmentsCross(*subm.vert(e00_id), *subm.vert(e01_id),
+                                              *subm.vert(e10_id), *subm.vert(e11_id));
+}
+
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 inline bool pointInsideSegment(const FastTrimesh &subm, uint ev0_id, uint ev1_id, uint p_id)
+{
+    return genericPoint::pointInInnerSegment(*subm.vert(p_id), *subm.vert(ev0_id), *subm.vert(ev1_id));
+}
+
+inline bool pointInsideSegment_cgal(const FastTrimesh &subm, uint ev0_id, uint ev1_id, uint p_id)
 {
     return genericPoint::pointInInnerSegment(*subm.vert(p_id), *subm.vert(ev0_id), *subm.vert(ev1_id));
 }

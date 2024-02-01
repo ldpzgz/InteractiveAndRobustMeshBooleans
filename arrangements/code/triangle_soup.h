@@ -55,7 +55,9 @@ typedef std::pair<uint, uint> Edge;
 
 template<typename K, typename V>
 using EdgeMap = phmap::flat_hash_map<K, V>;
-
+/*
+* 相当于一个mesh，有vertices，faces，edges
+*/
 class TriangleSoup
 {
     public:
